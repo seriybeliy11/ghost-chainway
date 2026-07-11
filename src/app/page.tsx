@@ -285,7 +285,7 @@ export default function Home() {
 
       {/* Overlays */}
       <ProfileMenu user={user} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isDark={isDark} />
-      <RefreshModal isOpen={isRefreshing && !isLoading} />
+      <RefreshModal isOpen={isRefreshing && !isLoading} isDark={isDark} />
       <EventModal event={selectedEvent} isOpen={!!selectedEvent} onClose={() => setSelectedEvent(null)} isDark={isDark} />
     </main>
   );
