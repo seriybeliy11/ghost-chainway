@@ -25,42 +25,42 @@ export default function GhostParticles({ isDark = true }: GhostParticlesProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animRef = useRef<number>(0);
+  const frameCountRef = useRef(0);
 
   const createParticle = useCallback((width: number, height: number): Particle => {
-    // Cyan-dominant palette for dark, blue-dominant for light
-    const colors = isDark ? [165, 175, 160, 190] : [210, 220, 200, 230];
+    const colors = isDark ? [165, 175, 160] : [210, 220, 200];
     const direction = Math.random();
     let x: number, y: number, sx: number, sy: number;
 
     if (direction < 0.5) {
       x = Math.random() * width;
       y = height + 30;
-      sx = (Math.random() - 0.5) * 1.8;
-      sy = -(Math.random() * 1.2 + 0.3);
+      sx = (Math.random() - 0.5) * 1.2;
+      sy = -(Math.random() * 0.8 + 0.2);
     } else if (direction < 0.75) {
       x = -30;
       y = Math.random() * height;
-      sx = Math.random() * 1.5 + 0.3;
-      sy = (Math.random() - 0.5) * 1.0;
+      sx = Math.random() * 1.0 + 0.2;
+      sy = (Math.random() - 0.5) * 0.6;
     } else {
       x = width + 30;
       y = Math.random() * height;
-      sx = -(Math.random() * 1.5 + 0.3);
-      sy = (Math.random() - 0.5) * 1.0;
+      sx = -(Math.random() * 1.0 + 0.2);
+      sy = (Math.random() - 0.5) * 0.6;
     }
 
     return {
       x, y,
-      size: Math.random() * 4 + 2,
+      size: Math.random() * 3 + 1.5,
       speedX: sx,
       speedY: sy,
-      wobbleSpeed: Math.random() * 0.04 + 0.01,
-      wobbleAmp: Math.random() * 2.5 + 1,
+      wobbleSpeed: Math.random() * 0.03 + 0.008,
+      wobbleAmp: Math.random() * 1.8 + 0.8,
       wobbleOffset: Math.random() * Math.PI * 2,
       hue: colors[Math.floor(Math.random() * colors.length)],
       life: 0,
-      maxLife: Math.random() * 500 + 300,
-      brightness: isDark ? Math.random() * 0.3 + 0.7 : Math.random() * 0.2 + 0.4,
+      maxLife: Math.random() * 400 + 250,
+      brightness: isDark ? Math.random() * 0.25 + 0.6 : Math.random() * 0.15 + 0.35,
     };
   }, [isDark]);
 
@@ -77,9 +77,8 @@ export default function GhostParticles({ isDark = true }: GhostParticlesProps) {
     resize();
     window.addEventListener('resize', resize);
 
-    // Reset particles when theme changes
     particlesRef.current = [];
-    const count = isDark ? 30 : 18;
+    const count = isDark ? 14 : 8;
 
     for (let i = 0; i < count; i++) {
       const p = createParticle(canvas.width, canvas.height);
@@ -88,23 +87,28 @@ export default function GhostParticles({ isDark = true }: GhostParticlesProps) {
     }
 
     const animate = () => {
+      frameCountRef.current++;
+
+      // Skip every other frame for 30fps feel
+      if (frameCountRef.current % 2 === 0) {
+        animRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const particles = particlesRef.current;
+      const sat = isDark ? 85 : 70;
+      const lightBase = isDark ? 70 : 60;
+      const coreLightness = isDark ? 85 : 75;
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.life++;
 
         const wobble = Math.sin(p.life * p.wobbleSpeed + p.wobbleOffset) * p.wobbleAmp;
-        const wobble2 = Math.cos(p.life * p.wobbleSpeed * 0.7 + p.wobbleOffset * 1.3) * p.wobbleAmp * 0.6;
 
-        p.x += p.speedX + wobble * 0.08;
-        p.y += p.speedY + wobble2 * 0.06;
-
-        if (Math.random() < 0.005) {
-          p.speedX += (Math.random() - 0.5) * 0.8;
-          p.speedY += (Math.random() - 0.5) * 0.8;
-        }
+        p.x += p.speedX + wobble * 0.06;
+        p.y += p.speedY;
 
         const lifeRatio = p.life / p.maxLife;
         let opacity: number;
@@ -122,14 +126,11 @@ export default function GhostParticles({ isDark = true }: GhostParticlesProps) {
           continue;
         }
 
-        const glowRadius = p.size * (isDark ? 8 : 6);
+        // Simplified glow: 2-stop gradient instead of 4
+        const glowRadius = p.size * (isDark ? 5 : 4);
         const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowRadius);
-        const sat = isDark ? 85 : 70;
-        const lightBase = isDark ? 70 : 60;
-        gradient.addColorStop(0, `hsla(${p.hue}, ${sat}%, ${lightBase}%, ${opacity * 0.5})`);
-        gradient.addColorStop(0.2, `hsla(${p.hue}, ${sat - 5}%, ${lightBase - 10}%, ${opacity * 0.25})`);
-        gradient.addColorStop(0.5, `hsla(${p.hue}, ${sat - 10}%, ${lightBase - 15}%, ${opacity * 0.08})`);
-        gradient.addColorStop(1, `hsla(${p.hue}, ${sat - 15}%, ${lightBase - 20}%, 0)`);
+        gradient.addColorStop(0, `hsla(${p.hue}, ${sat}%, ${lightBase}%, ${opacity * 0.4})`);
+        gradient.addColorStop(1, `hsla(${p.hue}, ${sat}%, ${lightBase}%, 0)`);
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, glowRadius, 0, Math.PI * 2);
@@ -138,9 +139,8 @@ export default function GhostParticles({ isDark = true }: GhostParticlesProps) {
 
         // Bright core
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
-        const coreLightness = isDark ? 85 : 75;
-        ctx.fillStyle = `hsla(${p.hue}, 90%, ${coreLightness}%, ${opacity * 0.9})`;
+        ctx.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 90%, ${coreLightness}%, ${opacity * 0.8})`;
         ctx.fill();
       }
 
@@ -158,7 +158,7 @@ export default function GhostParticles({ isDark = true }: GhostParticlesProps) {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-[1]"
-      style={{ opacity: isDark ? 0.9 : 0.5 }}
+      style={{ opacity: isDark ? 0.8 : 0.4 }}
     />
   );
 }

@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useCallback } from 'react';
-import { X, TrendingUp, Clock, Flame, BarChart3, ExternalLink, Activity, Zap } from 'lucide-react';
+import { X, TrendingUp, Clock, Flame, BarChart3, ExternalLink, Activity } from 'lucide-react';
 
 interface EventModalProps {
   event: {
@@ -67,7 +67,6 @@ export default function EventModal({ event, isOpen, onClose, isDark = true }: Ev
     { label: 'Days Left', value: daysLeft !== null ? `${daysLeft} days` : 'TBD', icon: Flame, color: isDark ? 'text-amber-400' : 'text-amber-600' },
   ];
 
-  // Pre-compute the modal content for the event so there's no layout shift
   const yesColor = yesPrice > 65
     ? 'from-emerald-400 to-emerald-500'
     : yesPrice > 40
@@ -78,103 +77,71 @@ export default function EventModal({ event, isOpen, onClose, isDark = true }: Ev
     <AnimatePresence>
       {isOpen && event && (
         <>
-          {/* Backdrop - soft fade */}
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.25 }}
             className="fixed inset-0 z-50"
             onClick={onClose}
             style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.25)' }}
           />
 
-          {/* Centered modal */}
+          {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-5 pointer-events-none">
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: 16 }}
-              transition={{
-                type: 'spring',
-                damping: 30,
-                stiffness: 280,
-                mass: 0.8,
-              }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300, mass: 0.8 }}
               className="w-full max-w-sm max-h-[85vh] rounded-3xl overflow-hidden pointer-events-auto flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Glass container */}
+              {/* Glass container — no animated background orbs */}
               <div className={`relative flex-1 flex flex-col backdrop-blur-2xl border transition-colors duration-300 ${
                 isDark
                   ? 'bg-[#0D0D24]/95 border-white/[0.1] shadow-[0_24px_80px_rgba(0,0,0,0.6)]'
                   : 'bg-white/90 border-gray-200 shadow-[0_24px_80px_rgba(0,0,0,0.15)]'
               }`}>
-
-                {/* Animated background orbs */}
+                {/* Static subtle glow */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  <motion.div
-                    animate={{ x: [0, 20, -15, 0], y: [0, -20, 10, 0], scale: [1, 1.3, 0.8, 1] }}
-                    transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                    className={`absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl transition-colors duration-300 ${
-                      isDark ? 'bg-blue-500/10' : 'bg-blue-200/40'
-                    }`}
-                  />
-                  <motion.div
-                    animate={{ x: [0, -15, 10, 0], y: [0, 10, -20, 0], scale: [1, 0.8, 1.2, 1] }}
-                    transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-                    className={`absolute -bottom-12 -left-12 w-32 h-32 rounded-full blur-3xl transition-colors duration-300 ${
-                      isDark ? 'bg-purple-500/8' : 'bg-purple-200/30'
-                    }`}
-                  />
-                  <motion.div
-                    animate={{ x: [0, 10, -10, 0], y: [0, -10, 15, 0] }}
-                    transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 4 }}
-                    className={`absolute top-1/3 left-1/2 w-36 h-36 rounded-full blur-3xl transition-colors duration-300 ${
-                      isDark ? 'bg-emerald-500/6' : 'bg-emerald-200/25'
-                    }`}
-                  />
+                  <div className={`absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl ${
+                    isDark ? 'bg-blue-500/8' : 'bg-blue-200/30'
+                  }`} />
+                  <div className={`absolute -bottom-12 -left-12 w-32 h-32 rounded-full blur-3xl ${
+                    isDark ? 'bg-purple-500/6' : 'bg-purple-200/20'
+                  }`} />
                 </div>
 
                 {/* Content */}
                 <div className="relative z-10 flex-1 overflow-y-auto">
-                  {/* Header with close */}
+                  {/* Header */}
                   <div className="flex items-center justify-between px-5 pt-5 pb-3">
                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm border transition-colors duration-300 ${
                       isDark ? 'bg-white/[0.06] border-white/[0.08] text-white/60' : 'bg-gray-100 border-gray-200 text-gray-600'
                     }`}>
                       {event.category || 'Market'}
                     </span>
-                    <motion.button
-                      whileTap={{ scale: 0.85, rotate: 90 }}
+                    <button
                       onClick={onClose}
-                      className={`w-8 h-8 rounded-full backdrop-blur-sm border flex items-center justify-center transition-colors duration-300 ${
+                      className={`w-8 h-8 rounded-full backdrop-blur-sm border flex items-center justify-center transition-colors duration-300 active:scale-90 ${
                         isDark ? 'bg-white/5 border-white/[0.08] hover:bg-white/10' : 'bg-gray-100 border-gray-200 hover:bg-gray-200'
                       }`}
                     >
                       <X className={`w-3.5 h-3.5 transition-colors duration-300 ${isDark ? 'text-white/60' : 'text-gray-500'}`} />
-                    </motion.button>
+                    </button>
                   </div>
 
                   {/* Question */}
-                  <motion.h2
-                    initial={{ y: 8, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.08, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className={`text-[17px] font-bold leading-snug px-5 mb-5 transition-colors duration-300 ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}
-                  >
+                  <h2 className={`text-[17px] font-bold leading-snug px-5 mb-5 transition-colors duration-300 ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}>
                     {event.question}
-                  </motion.h2>
+                  </h2>
 
-                  {/* Probability display */}
-                  <motion.div
-                    initial={{ y: 8, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.12, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className="px-5 mb-5"
-                  >
+                  {/* Probability */}
+                  <div className="px-5 mb-5">
                     <div className={`rounded-2xl p-4 border transition-colors duration-300 ${
                       isDark ? 'glass-card' : 'glass-card-light'
                     }`}>
@@ -209,32 +176,24 @@ export default function EventModal({ event, isOpen, onClose, isDark = true }: Ev
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${yesPrice}%` }}
-                          transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                          transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                           className={`h-full rounded-l-full bg-gradient-to-r ${yesColor}`}
                         />
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${noPrice}%` }}
-                          transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                          transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                           className="h-full rounded-r-full bg-gradient-to-r from-purple-400 to-indigo-500"
                         />
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
 
-                  {/* Stats grid */}
-                  <motion.div
-                    initial={{ y: 8, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.18, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className="grid grid-cols-2 gap-2 px-5 mb-5"
-                  >
-                    {stats.map((stat, i) => (
-                      <motion.div
+                  {/* Stats grid — no staggered animation per item */}
+                  <div className="grid grid-cols-2 gap-2 px-5 mb-5">
+                    {stats.map((stat) => (
+                      <div
                         key={stat.label}
-                        initial={{ scale: 0.96, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.22 + i * 0.04, duration: 0.3 }}
                         className={`rounded-xl p-3 border transition-colors duration-300 ${
                           isDark ? 'glass-card' : 'glass-card-light'
                         }`}
@@ -246,16 +205,13 @@ export default function EventModal({ event, isOpen, onClose, isDark = true }: Ev
                           </span>
                         </div>
                         <p className={`text-sm font-bold transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>
-                      </motion.div>
+                      </div>
                     ))}
-                  </motion.div>
+                  </div>
 
-                  {/* Hot badge */}
+                  {/* Hot badge — no animation */}
                   {isHot && (
-                    <motion.div
-                      initial={{ y: 8, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.3, duration: 0.3 }}
+                    <div
                       className="mx-5 mb-5 flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-colors duration-300"
                       style={{
                         background: isDark
@@ -266,30 +222,19 @@ export default function EventModal({ event, isOpen, onClose, isDark = true }: Ev
                           : (isVeryHot ? 'rgba(239,68,68,0.1)' : 'rgba(249,115,22,0.1)')
                       }}
                     >
-                      <motion.div
-                        animate={isVeryHot ? { scale: [1, 1.2, 1], rotate: [0, -5, 5, 0] } : { scale: [1, 1.12, 1] }}
-                        transition={{ duration: isVeryHot ? 1.2 : 2, repeat: Infinity, ease: 'easeInOut' }}
-                      >
-                        <Flame className={`w-3.5 h-3.5 ${isVeryHot ? 'text-red-400' : 'text-orange-400'}`} />
-                      </motion.div>
+                      <Flame className={`w-3.5 h-3.5 ${isVeryHot ? 'text-red-400' : 'text-orange-400'}`} />
                       <span className={`text-[11px] font-medium transition-colors duration-300 ${
                         isDark ? 'text-white/50' : 'text-gray-500'
                       }`}>
                         {isVeryHot ? 'Blazing — Extremely high trading activity' : 'Trending — High trading activity'}
                       </span>
-                    </motion.div>
+                    </div>
                   )}
 
                   {/* CTA */}
-                  <motion.div
-                    initial={{ y: 8, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.35, duration: 0.3 }}
-                    className="px-5 pb-5"
-                  >
-                    <motion.button
-                      whileTap={{ scale: 0.97 }}
-                      className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300"
+                  <div className="px-5 pb-5">
+                    <button
+                      className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
                       style={{
                         background: isDark
                           ? 'linear-gradient(135deg, #406CFF, #6A00FF)'
@@ -301,8 +246,8 @@ export default function EventModal({ event, isOpen, onClose, isDark = true }: Ev
                     >
                       <ExternalLink className="w-4 h-4" />
                       Trade on Polymarket
-                    </motion.button>
-                  </motion.div>
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

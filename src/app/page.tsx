@@ -66,9 +66,9 @@ export default function Home() {
         setIsLoading(false);
         setIsRefreshing(false);
         if (showSkeleton) {
-          setTimeout(() => setShowGhostLoader(false), 300);
+          setTimeout(() => setShowGhostLoader(false), 200);
         }
-      }, 1200);
+      }, 1000);
     }
   }, []);
 
@@ -126,7 +126,7 @@ export default function Home() {
 
   return (
     <main className={`min-h-screen flex flex-col transition-colors duration-500 ${isDark ? 'bg-phantom-dark' : 'bg-gray-50'} relative`}>
-      {/* Background ambient glows */}
+      {/* Background ambient glows — static */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[120px] transition-colors duration-500 ${isDark ? 'bg-phantom-primary/6' : 'bg-blue-200/30'}`} />
         <div className={`absolute top-1/4 -right-32 w-48 h-48 rounded-full blur-[100px] transition-colors duration-500 ${isDark ? 'bg-phantom-secondary-a/5' : 'bg-purple-200/25'}`} />
@@ -146,12 +146,9 @@ export default function Home() {
         />
 
         <div className="flex-1 px-5 pt-4 pb-24">
-          {/* Stats bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="flex items-center gap-3 mb-5"
+          {/* Stats bar — CSS animation instead of framer-motion */}
+          <div
+            className="flex items-center gap-3 mb-5 animate-[fadeInUp_0.5s_ease_0.1s_both]"
           >
             <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors duration-500 ${isDark ? 'glass-card' : 'glass-card-light'}`}>
               <TrendingUp className={`w-3.5 h-3.5 ${isDark ? 'text-phantom-secondary-b' : 'text-emerald-600'}`} />
@@ -162,37 +159,34 @@ export default function Home() {
               <span className={`text-xs font-semibold ${isDark ? 'text-white/80' : 'text-gray-700'}`}>Top Volume</span>
             </div>
             <div className="flex-1" />
-            {/* Theme toggle */}
+
+            {/* Theme toggle — simple CSS transition */}
             {mounted && (
-              <motion.button
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={toggleTheme}
-                className={`flex items-center justify-center w-9 h-9 rounded-xl transition-colors duration-500 ${isDark ? 'glass-card hover:bg-white/[0.06]' : 'glass-card-light hover:bg-black/[0.04]'}`}
+                className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 ${
+                  isDark ? 'glass-card hover:bg-white/[0.06]' : 'glass-card-light hover:bg-black/[0.04]'
+                }`}
                 aria-label="Toggle theme"
               >
-                <AnimatePresence mode="wait">
-                  {isDark ? (
-                    <motion.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                      <Sun className="w-4 h-4 text-amber-400" />
-                    </motion.div>
-                  ) : (
-                    <motion.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                      <Moon className="w-4 h-4 text-indigo-500" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
+                {isDark ? (
+                  <Sun className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <Moon className="w-4 h-4 text-indigo-500" />
+                )}
+              </button>
             )}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`flex items-center justify-center w-9 h-9 rounded-xl transition-colors disabled:opacity-50 ${isDark ? 'glass-card hover:bg-white/[0.06]' : 'glass-card-light hover:bg-black/[0.04]'}`}
+              className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 disabled:opacity-50 ${
+                isDark ? 'glass-card hover:bg-white/[0.06]' : 'glass-card-light hover:bg-black/[0.04]'
+              }`}
               aria-label="Refresh markets"
             >
-              <RefreshCw className={`w-4 h-4 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'} ${isRefreshing ? 'animate-spin' : ''}`} />
-            </motion.button>
-          </motion.div>
+              <RefreshCw className={`w-4 h-4 transition-transform duration-500 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'} ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
 
           {/* Loading or Events */}
           <AnimatePresence mode="wait">
@@ -201,26 +195,18 @@ export default function Home() {
                 key="loading"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.3 } }}
+                exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 className="space-y-6"
               >
                 {showGhostLoader && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9, y: -20 }}
-                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                    className="flex flex-col items-center gap-3"
-                  >
+                  <div className="flex flex-col items-center gap-3">
                     <Ghost3D />
-                    <motion.p
-                      animate={{ opacity: [0.3, 0.7, 0.3] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                      className={`text-xs font-medium transition-colors duration-500 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'}`}
+                    <p
+                      className={`text-xs font-medium animate-pulse transition-colors duration-500 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'}`}
                     >
                       Scanning the markets...
-                    </motion.p>
-                  </motion.div>
+                    </p>
+                  </div>
                 )}
 
                 <div className="space-y-3">
@@ -234,7 +220,7 @@ export default function Home() {
                 key="events"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.3 }}
               >
                 <div className="space-y-3">
                   {events.map((event, index) => (
@@ -249,29 +235,25 @@ export default function Home() {
                 </div>
 
                 {events.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="flex flex-col items-center gap-2 pt-8 pb-4"
+                  <div
+                    className="flex flex-col items-center gap-2 pt-8 pb-4 animate-[fadeIn_0.5s_ease_0.3s_both]"
                   >
                     <GhostIcon className={`transition-colors duration-500 ${isDark ? 'text-phantom-primary/20' : 'text-gray-400/40'}`} size={18} />
                     <p className={`text-[11px] transition-colors duration-500 ${isDark ? 'text-phantom-text-secondary/40' : 'text-gray-400/60'}`}>
                       You&apos;re all caught up
                     </p>
-                  </motion.div>
+                  </div>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Sticky footer */}
-        <motion.footer
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-          className={`mt-auto px-5 py-3.5 border-t backdrop-blur-xl transition-colors duration-500 ${isDark ? 'border-white/[0.04] bg-phantom-dark/70' : 'border-gray-200 bg-white/70'}`}
+        {/* Sticky footer — CSS animation */}
+        <footer
+          className={`mt-auto px-5 py-3.5 border-t backdrop-blur-xl transition-colors duration-500 animate-[fadeIn_0.5s_ease_0.6s_both] ${
+            isDark ? 'border-white/[0.04] bg-phantom-dark/70' : 'border-gray-200 bg-white/70'
+          }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -280,7 +262,7 @@ export default function Home() {
             </div>
             <span className={`text-[10px] transition-colors duration-500 ${isDark ? 'text-phantom-text-secondary/25' : 'text-gray-400/40'}`}>Powered by Polymarket</span>
           </div>
-        </motion.footer>
+        </footer>
       </div>
 
       {/* Overlays */}

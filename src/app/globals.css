@@ -296,3 +296,20 @@ body {
 .float-animation {
   animation: float 3s ease-in-out infinite;
 }
+
+/* Lightweight CSS entrance animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

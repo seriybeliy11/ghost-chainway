@@ -21,15 +21,15 @@ export default function RefreshModal({ isOpen, isDark = true }: RefreshModalProp
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.6)', backdropFilter: 'blur(8px)' }}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.88, y: 10 }}
+            initial={{ opacity: 0, scale: 0.9, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.88, y: 10 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+            exit={{ opacity: 0, scale: 0.9, y: 8 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 320, mass: 0.7 }}
             className="relative w-72 rounded-3xl overflow-hidden"
           >
             <div
@@ -46,20 +46,14 @@ export default function RefreshModal({ isOpen, isDark = true }: RefreshModalProp
                   : '0 24px 80px rgba(0,0,0,0.08)',
               }}
             >
-              {/* Background glow */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <motion.div
-                  animate={{ opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  className={`absolute inset-0 transition-colors duration-300 ${
-                    isDark
-                      ? 'bg-gradient-to-b from-[#73FFE4]/10 via-transparent to-[#6A00FF]/5'
-                      : 'bg-gradient-to-b from-[#73FFE4]/8 via-transparent to-[#7C3AED]/4'
-                  }`}
-                />
-              </div>
+              {/* Static subtle glow */}
+              <div className={`absolute inset-0 pointer-events-none transition-colors duration-300 ${
+                isDark
+                  ? 'bg-gradient-to-b from-[#73FFE4]/8 via-transparent to-[#6A00FF]/4'
+                  : 'bg-gradient-to-b from-[#73FFE4]/6 via-transparent to-[#7C3AED]/3'
+              }`} />
 
-              {/* Ghost 3D — white bg wrapper in light mode for contrast */}
+              {/* Ghost 3D — white bg wrapper in light mode */}
               <div
                 className={`relative z-10 w-full h-40 -mb-2 rounded-2xl overflow-hidden transition-colors duration-300 ${
                   isDark ? '' : 'bg-white/80'
@@ -69,27 +63,18 @@ export default function RefreshModal({ isOpen, isDark = true }: RefreshModalProp
               </div>
 
               {/* Text */}
-              <motion.div
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-                className="relative z-10 text-center"
-              >
+              <div className="relative z-10 text-center">
                 <p className={`text-sm font-semibold mb-1 transition-colors duration-300 ${
                   isDark ? 'text-white/90' : 'text-gray-800'
                 }`}>
                   Refreshing markets
                 </p>
-                <motion.p
-                  animate={{ opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  className={`text-[11px] transition-colors duration-300 ${
-                    isDark ? 'text-phantom-text-secondary' : 'text-gray-500'
-                  }`}
-                >
+                <p className={`text-[11px] animate-pulse transition-colors duration-300 ${
+                  isDark ? 'text-phantom-text-secondary' : 'text-gray-500'
+                }`}>
                   Scanning for the hottest events...
-                </motion.p>
-              </motion.div>
+                </p>
+              </div>
             </div>
           </motion.div>
         </motion.div>

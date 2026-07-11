@@ -1,7 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import type { LucideIcon } from 'lucide-react';
 import { Flame, TrendingUp, Clock } from 'lucide-react';
 
 export interface PolymarketEvent {
@@ -93,7 +92,6 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
   const bgGradients = isDark ? darkBgGradients : lightBgGradients;
   const bgGrad = bgGradients[index % bgGradients.length];
 
-  // Dynamic color for probability based on value
   const yesColor = yesPrice > 65
     ? (isDark ? 'from-emerald-400 to-emerald-500' : 'from-emerald-500 to-emerald-600')
     : yesPrice > 40
@@ -104,59 +102,31 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28, scale: 0.96 }}
+      initial={{ opacity: 0, y: 20, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{
-        delay: index * 0.06,
-        duration: 0.55,
+        delay: index * 0.05,
+        duration: 0.4,
         ease: [0.16, 1, 0.3, 1],
       }}
-      whileHover={isDark ? { y: -2, boxShadow: '0 12px 48px rgba(115,255,228,0.12), 0 0 0 1px rgba(115,255,228,0.1)' } : { y: -2, boxShadow: '0 12px 48px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)' }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 h-[190px] ${
+      className={`relative rounded-2xl overflow-hidden cursor-pointer active:scale-[0.98] transition-shadow duration-300 h-[190px] ${
         isDark
-          ? 'border border-white/[0.08] hover:border-white/[0.15]'
+          ? 'border border-white/[0.08] hover:border-white/[0.15] hover:shadow-[0_8px_32px_rgba(115,255,228,0.1)]'
           : 'border border-gray-200/80 hover:border-gray-300 shadow-sm hover:shadow-lg'
       }`}
     >
-      {/* Animated gradient background */}
+      {/* Static gradient background — no animated orbs */}
       <div className={`absolute inset-0 bg-gradient-to-br ${bgGrad}`}>
-        {/* Animated orbs - more prominent */}
-        <motion.div
-          animate={{
-            x: [0, 20, -15, 8, 0],
-            y: [0, -15, 20, -10, 0],
-            scale: [1, 1.4, 0.85, 1.15, 1],
-          }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-          className={`absolute -top-12 -left-12 w-36 h-36 rounded-full blur-2xl ${
-            isDark ? 'bg-phantom-primary/20' : 'bg-blue-300/30'
-          }`}
-        />
-        <motion.div
-          animate={{
-            x: [0, -25, 15, -8, 0],
-            y: [0, 18, -15, 25, 0],
-            scale: [1, 0.75, 1.3, 0.85, 1],
-          }}
-          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
-          className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-2xl ${
-            isDark ? 'bg-phantom-secondary-a/15' : 'bg-purple-300/25'
-          }`}
-        />
-        <motion.div
-          animate={{
-            x: [0, 12, -18, 10, 0],
-            y: [0, -18, 8, -12, 0],
-            scale: [1.1, 0.85, 1.25, 0.95, 1.1],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
-          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full blur-3xl ${
-            isDark ? 'bg-phantom-secondary-b/10' : 'bg-emerald-300/20'
-          }`}
-        />
-        {/* Glass overlay for readability */}
+        {/* Single static glow orb via CSS */}
+        <div className={`absolute -top-12 -left-12 w-36 h-36 rounded-full blur-2xl ${
+          isDark ? 'bg-phantom-primary/15' : 'bg-blue-300/25'
+        }`} />
+        <div className={`absolute -bottom-10 -right-10 w-28 h-28 rounded-full blur-2xl ${
+          isDark ? 'bg-phantom-secondary-a/10' : 'bg-purple-300/20'
+        }`} />
+        {/* Glass overlay */}
         <div className={`absolute inset-0 transition-colors duration-300 ${
           isDark
             ? 'bg-gradient-to-b from-black/15 via-black/35 to-black/80'
@@ -166,30 +136,26 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col justify-between p-4">
-        {/* Top: Category + Hot badge */}
+        {/* Top */}
         <div className="flex items-center justify-between">
           <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md border transition-colors duration-300 ${getCategoryStyle(event.category)}`}>
             {event.category || 'Market'}
           </span>
           {isHot && (
-            <motion.div
-              animate={isVeryHot ? { scale: [1, 1.15, 1], opacity: [0.9, 1, 0.9] } : { scale: [1, 1.08, 1] }}
-              transition={{ duration: isVeryHot ? 1.2 : 2, repeat: Infinity, ease: 'easeInOut' }}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full backdrop-blur-md border transition-colors duration-300 ${
-                isVeryHot
-                  ? (isDark ? 'bg-red-500/25 border-red-500/30' : 'bg-red-100 border-red-200')
-                  : (isDark ? 'bg-orange-500/20 border-orange-500/25' : 'bg-orange-100 border-orange-200')
-              }`}
-            >
+            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full backdrop-blur-md border transition-colors duration-300 ${
+              isVeryHot
+                ? (isDark ? 'bg-red-500/25 border-red-500/30' : 'bg-red-100 border-red-200')
+                : (isDark ? 'bg-orange-500/20 border-orange-500/25' : 'bg-orange-100 border-orange-200')
+            }`}>
               <Flame className={`w-3 h-3 ${isVeryHot ? 'text-red-400' : 'text-orange-400'}`} />
               <span className={`text-[10px] font-bold ${isVeryHot ? 'text-red-300' : 'text-orange-300'}`}>
                 {isVeryHot ? 'Blazing' : 'Hot'}
               </span>
-            </motion.div>
+            </div>
           )}
         </div>
 
-        {/* Middle: Question - more expressive */}
+        {/* Question */}
         <div className="flex-1 flex items-center">
           <h3 className={`text-[15px] font-bold leading-snug line-clamp-2 drop-shadow-lg transition-colors duration-300 ${
             isDark ? 'text-white/95' : 'text-gray-900'
@@ -198,7 +164,7 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
           </h3>
         </div>
 
-        {/* Bottom: Probability + Stats */}
+        {/* Bottom */}
         <div className="space-y-2.5">
           {/* Big probability numbers */}
           <div className="flex items-end justify-between mb-1">
@@ -237,13 +203,13 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${yesPrice}%` }}
-              transition={{ delay: index * 0.06 + 0.3, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: index * 0.05 + 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className={`h-full rounded-l-full bg-gradient-to-r ${yesColor}`}
             />
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${noPrice}%` }}
-              transition={{ delay: index * 0.06 + 0.3, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: index * 0.05 + 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className={`h-full rounded-r-full bg-gradient-to-r ${noColor}`}
             />
           </div>

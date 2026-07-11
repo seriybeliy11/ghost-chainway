@@ -8,16 +8,10 @@ import * as THREE from 'three';
 function GhostBody() {
   const meshRef = useRef<THREE.Group>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
-  const leftEyeRef = useRef<THREE.Mesh>(null);
-  const rightEyeRef = useRef<THREE.Mesh>(null);
-  const mouthRef = useRef<THREE.Group>(null);
-  const twitchTimer = useRef(0);
-  const isTwitching = useRef(false);
-  const twitchIntensity = useRef(0);
 
   const ghostGeometry = useMemo(() => {
     const points: THREE.Vector2[] = [];
-    const segments = 40;
+    const segments = 28;
 
     for (let i = 0; i <= segments; i++) {
       const t = i / segments;
@@ -50,7 +44,7 @@ function GhostBody() {
       points.push(new THREE.Vector2(Math.max(0.001, x), y));
     }
 
-    const geo = new THREE.LatheGeometry(points, 32);
+    const geo = new THREE.LatheGeometry(points, 24);
     const pos = geo.attributes.position;
 
     for (let i = 0; i < pos.count; i++) {
@@ -79,57 +73,20 @@ function GhostBody() {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
+    if (!meshRef.current) return;
 
-    const flickerChance = Math.random();
-    let flickerMult = 1;
-    if (flickerChance < 0.01) flickerMult = 1.5;
-    else if (flickerChance < 0.025) flickerMult = 0.45;
+    // Simple float + subtle sway — no random/twitch
+    meshRef.current.position.y = Math.sin(time * 0.6) * 0.15;
+    meshRef.current.position.x = Math.sin(time * 0.3) * 0.03;
+    meshRef.current.rotation.z = Math.sin(time * 0.35) * 0.06;
+    meshRef.current.rotation.y = Math.sin(time * 0.25) * 0.1;
 
-    twitchTimer.current += 1;
-    if (!isTwitching.current && Math.random() < 0.003) {
-      isTwitching.current = true;
-      twitchTimer.current = 0;
-      twitchIntensity.current = 0.09 + Math.random() * 0.16;
-    }
-    if (isTwitching.current && twitchTimer.current > 7 + Math.random() * 9) {
-      isTwitching.current = false;
-    }
-
-    const twitchX = isTwitching.current ? Math.sin(twitchTimer.current * 3.5) * twitchIntensity.current : 0;
-    const twitchY = isTwitching.current ? Math.cos(twitchTimer.current * 4.2) * twitchIntensity.current * 0.5 : 0;
-
-    if (meshRef.current) {
-      meshRef.current.position.y = Math.sin(time * 0.6) * 0.18 + twitchY;
-      meshRef.current.position.x = Math.sin(time * 0.3) * 0.04 + twitchX;
-      meshRef.current.rotation.z = Math.sin(time * 0.35) * 0.08 + (isTwitching.current ? Math.sin(twitchTimer.current * 5) * 0.05 : 0);
-      meshRef.current.rotation.y = Math.sin(time * 0.25) * 0.12;
-
-      const breathScale = 1 + (Math.sin(time * 0.8) * 0.5 + 0.5) * 0.045;
-      const jitterScale = 1 + (Math.random() - 0.5) * 0.007;
-      meshRef.current.scale.setScalar(breathScale * jitterScale * flickerMult);
-    }
+    // Gentle breath only
+    const breathScale = 1 + Math.sin(time * 0.8) * 0.02;
+    meshRef.current.scale.setScalar(breathScale);
 
     if (materialRef.current) {
-      const emissivePulse = 0.3 + Math.sin(time * 1.2) * 0.15 + Math.sin(time * 3.7) * 0.06;
-      materialRef.current.emissiveIntensity = emissivePulse * flickerMult;
-      materialRef.current.opacity = 0.68 + Math.sin(time * 2.1) * 0.08 + (flickerMult < 1 ? -0.18 : 0);
-    }
-
-    if (leftEyeRef.current) {
-      const eyeJitterX = Math.sin(time * 1.3) * 0.015 + (isTwitching.current ? Math.sin(twitchTimer.current * 8) * 0.025 : 0);
-      leftEyeRef.current.position.x = -0.22 + eyeJitterX;
-      leftEyeRef.current.position.y = 1.05 + Math.cos(time * 0.9) * 0.012;
-    }
-    if (rightEyeRef.current) {
-      const eyeJitterX = Math.sin(time * 1.3) * 0.015 + (isTwitching.current ? Math.sin(twitchTimer.current * 8) * 0.025 : 0);
-      rightEyeRef.current.position.x = 0.22 + eyeJitterX;
-      rightEyeRef.current.position.y = 1.05 + Math.cos(time * 0.9) * 0.012;
-    }
-
-    if (mouthRef.current) {
-      mouthRef.current.rotation.z = Math.sin(time * 0.9) * 0.08;
-      mouthRef.current.position.y = 0.78 + Math.sin(time * 1.6) * 0.02;
-      mouthRef.current.scale.setScalar(1 + Math.sin(time * 2.2) * 0.08);
+      materialRef.current.emissiveIntensity = 0.3 + Math.sin(time * 1.2) * 0.12;
     }
   });
 
@@ -149,76 +106,69 @@ function GhostBody() {
         />
       </mesh>
 
+      {/* Inner glow sphere */}
       <mesh position={[0, 0.3, 0]}>
-        <sphereGeometry args={[0.45, 16, 16]} />
+        <sphereGeometry args={[0.45, 12, 12]} />
         <meshStandardMaterial
           color="#73FFE4"
           emissive="#30BFA3"
-          emissiveIntensity={0.6}
+          emissiveIntensity={0.5}
           transparent
-          opacity={0.28}
+          opacity={0.25}
           roughness={0.5}
         />
       </mesh>
 
-      {/* Left eye - enhanced glow */}
+      {/* Left eye */}
       <group position={[-0.22, 1.05, 0.55]}>
-        <mesh ref={leftEyeRef}>
-          <sphereGeometry args={[0.09, 16, 16]} />
-          <meshStandardMaterial
-            color="#0a0a1f"
-            emissive="#73FFE4"
-            emissiveIntensity={0.4}
-            roughness={0.9}
-          />
-        </mesh>
-        <mesh position={[0, 0, 0.04]}>
-          <sphereGeometry args={[0.055, 10, 10]} />
-          <meshStandardMaterial
-            color="#73FFE4"
-            emissive="#a0ffeb"
-            emissiveIntensity={1.8}
-            transparent
-            opacity={0.75}
-          />
-        </mesh>
-        <mesh position={[0.025, 0.035, 0.08]}>
-          <sphereGeometry args={[0.018, 8, 8]} />
-          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.9} />
-        </mesh>
-      </group>
-
-      {/* Right eye - enhanced glow */}
-      <group position={[0.22, 1.05, 0.55]}>
-        <mesh ref={rightEyeRef}>
-          <sphereGeometry args={[0.09, 16, 16]} />
-          <meshStandardMaterial
-            color="#0a0a1f"
-            emissive="#73FFE4"
-            emissiveIntensity={0.4}
-            roughness={0.9}
-          />
-        </mesh>
-        <mesh position={[0, 0, 0.04]}>
-          <sphereGeometry args={[0.055, 10, 10]} />
-          <meshStandardMaterial
-            color="#73FFE4"
-            emissive="#a0ffeb"
-            emissiveIntensity={1.8}
-            transparent
-            opacity={0.75}
-          />
-        </mesh>
-        <mesh position={[0.025, 0.035, 0.08]}>
-          <sphereGeometry args={[0.018, 8, 8]} />
-          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.9} />
-        </mesh>
-      </group>
-
-      {/* Menacing smile */}
-      <group ref={mouthRef} position={[0, 0.78, 0.55]}>
         <mesh>
-          <torusGeometry args={[0.18, 0.035, 8, 20, Math.PI * 0.95]} />
+          <sphereGeometry args={[0.09, 12, 12]} />
+          <meshStandardMaterial
+            color="#0a0a1f"
+            emissive="#73FFE4"
+            emissiveIntensity={0.4}
+            roughness={0.9}
+          />
+        </mesh>
+        <mesh position={[0, 0, 0.04]}>
+          <sphereGeometry args={[0.05, 8, 8]} />
+          <meshStandardMaterial
+            color="#73FFE4"
+            emissive="#a0ffeb"
+            emissiveIntensity={1.5}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
+      </group>
+
+      {/* Right eye */}
+      <group position={[0.22, 1.05, 0.55]}>
+        <mesh>
+          <sphereGeometry args={[0.09, 12, 12]} />
+          <meshStandardMaterial
+            color="#0a0a1f"
+            emissive="#73FFE4"
+            emissiveIntensity={0.4}
+            roughness={0.9}
+          />
+        </mesh>
+        <mesh position={[0, 0, 0.04]}>
+          <sphereGeometry args={[0.05, 8, 8]} />
+          <meshStandardMaterial
+            color="#73FFE4"
+            emissive="#a0ffeb"
+            emissiveIntensity={1.5}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
+      </group>
+
+      {/* Mouth */}
+      <group position={[0, 0.78, 0.55]}>
+        <mesh>
+          <torusGeometry args={[0.18, 0.035, 6, 16, Math.PI * 0.95]} />
           <meshStandardMaterial
             color="#0a0a1f"
             emissive="#73FFE4"
@@ -227,25 +177,25 @@ function GhostBody() {
           />
         </mesh>
         <mesh position={[0, -0.09, 0.03]} rotation={[0.45, 0, 0]}>
-          <sphereGeometry args={[0.065, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+          <sphereGeometry args={[0.065, 6, 6, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
           <meshStandardMaterial
             color="#ff4d4d"
             emissive="#ff1a1a"
-            emissiveIntensity={0.6}
+            emissiveIntensity={0.5}
             transparent
-            opacity={0.75}
+            opacity={0.7}
           />
         </mesh>
       </group>
 
       {/* Cheeks */}
       <mesh position={[-0.42, 0.82, 0.45]}>
-        <sphereGeometry args={[0.055, 8, 8]} />
-        <meshStandardMaterial color="#73FFE4" emissive="#73FFE4" emissiveIntensity={0.25} transparent opacity={0.3} />
+        <sphereGeometry args={[0.05, 6, 6]} />
+        <meshStandardMaterial color="#73FFE4" emissive="#73FFE4" emissiveIntensity={0.2} transparent opacity={0.25} />
       </mesh>
       <mesh position={[0.42, 0.82, 0.45]}>
-        <sphereGeometry args={[0.055, 8, 8]} />
-        <meshStandardMaterial color="#73FFE4" emissive="#73FFE4" emissiveIntensity={0.25} transparent opacity={0.3} />
+        <sphereGeometry args={[0.05, 6, 6]} />
+        <meshStandardMaterial color="#73FFE4" emissive="#73FFE4" emissiveIntensity={0.2} transparent opacity={0.25} />
       </mesh>
     </group>
   );
@@ -253,37 +203,35 @@ function GhostBody() {
 
 function Particles() {
   const particlesRef = useRef<THREE.Points>(null);
-  const count = 45;
+  const count = 15;
 
-  const positions = useMemo(() => {
+  const [positions, speeds] = useMemo(() => {
     const pos = new Float32Array(count * 3);
+    const spd = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 4.5;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 5.5;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 2.5;
+      pos[i * 3] = (Math.random() - 0.5) * 4;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 5;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 2;
+      spd[i] = 0.002 + Math.random() * 0.003;
     }
-    return pos;
+    return [pos, spd];
   }, []);
 
   useFrame((state) => {
+    if (!particlesRef.current) return;
     const time = state.clock.getElapsedTime();
-    if (particlesRef.current) {
-      const pos = particlesRef.current.geometry.attributes.position;
-      for (let i = 0; i < count; i++) {
-        const y = pos.getY(i);
-        pos.setY(i, y + 0.003 + Math.sin(time * 0.6 + i) * 0.0015);
-        pos.setX(i, pos.getX(i) + Math.sin(time * 0.4 + i * 1.3) * 0.0012);
+    const pos = particlesRef.current.geometry.attributes.position;
 
-        if (pos.getY(i) > 3.2) {
-          pos.setY(i, -2.8);
-          pos.setX(i, (Math.random() - 0.5) * 4.5);
-        }
+    for (let i = 0; i < count; i++) {
+      let y = pos.getY(i) + speeds[i];
+      if (y > 2.8) {
+        y = -2.8;
+        pos.setX(i, (Math.random() - 0.5) * 4);
       }
-      pos.needsUpdate = true;
-
-      const mat = particlesRef.current.material as THREE.PointsMaterial;
-      mat.opacity = 0.55 + Math.sin(time * 3) * 0.15;
+      pos.setY(i, y);
+      pos.setX(i, pos.getX(i) + Math.sin(time * 0.4 + i * 1.3) * 0.0008);
     }
+    pos.needsUpdate = true;
   });
 
   return (
@@ -297,37 +245,13 @@ function Particles() {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.038}
+        size={0.035}
         color="#73FFE4"
         transparent
-        opacity={0.55}
+        opacity={0.45}
         sizeAttenuation
       />
     </points>
-  );
-}
-
-function PulsingLight() {
-  const lightRef = useRef<THREE.PointLight>(null);
-
-  useFrame((state) => {
-    const time = state.clock.getElapsedTime();
-    if (lightRef.current) {
-      const base = 1.8 + Math.sin(time * 1.1) * 0.7;
-      const flicker = Math.sin(time * 5.2) * 0.4 + Math.sin(time * 8.3) * 0.2;
-      const dim = Math.random() < 0.008 ? 0.25 : 1;
-      lightRef.current.intensity = (base + flicker) * dim;
-    }
-  });
-
-  return (
-    <pointLight
-      ref={lightRef}
-      position={[0, 0.6, 2.2]}
-      color="#73FFE4"
-      intensity={1.8}
-      distance={6}
-    />
   );
 }
 
@@ -336,13 +260,14 @@ export default function Ghost3D() {
     <div className="w-full h-48 md:h-64 relative">
       <Canvas
         camera={{ position: [0, 0.4, 3.4], fov: 44 }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
+        dpr={[1, 1.5]}
         style={{ background: 'transparent' }}
       >
         <ambientLight intensity={0.3} color="#73FFE4" />
         <directionalLight position={[2, 3, 4]} intensity={0.35} color="#ffffff" />
-        <PulsingLight />
-        <Float speed={1.1} rotationIntensity={0.18} floatIntensity={0.22}>
+        <pointLight position={[0, 0.6, 2.2]} color="#73FFE4" intensity={2} distance={6} />
+        <Float speed={0.8} rotationIntensity={0.12} floatIntensity={0.15}>
           <GhostBody />
         </Float>
         <Particles />
