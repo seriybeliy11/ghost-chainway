@@ -14,6 +14,7 @@ import EventCard from '@/components/phantom/EventCard';
 import type { PolymarketEvent } from '@/components/phantom/EventCard';
 import SkeletonCard from '@/components/phantom/SkeletonCard';
 import GhostIcon from '@/components/phantom/GhostIcon';
+import Onboarding from '@/components/phantom/Onboarding';
 
 const Ghost3D = dynamic(() => import('@/components/phantom/Ghost3D'), {
   ssr: false,
@@ -40,8 +41,23 @@ export default function Home() {
   const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Check onboarding status after mount
+  useEffect(() => {
+    if (!mounted) return;
+    const onboardingDone = localStorage.getItem('phantom_onboarding_done');
+    if (!onboardingDone) {
+      setShowOnboarding(true);
+    }
+  }, [mounted]);
+
+  const completeOnboarding = useCallback(() => {
+    localStorage.setItem('phantom_onboarding_done', 'true');
+    setShowOnboarding(false);
+  }, []);
 
   const fetchEventsRef = useRef<(showSkeleton?: boolean) => Promise<void>>();
 
@@ -269,6 +285,17 @@ export default function Home() {
       <ProfileMenu user={user} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isDark={isDark} />
       <RefreshModal isOpen={isRefreshing && !isLoading} isDark={isDark} />
       <EventModal event={selectedEvent} isOpen={!!selectedEvent} onClose={() => setSelectedEvent(null)} isDark={isDark} />
+
+      {/* Onboarding overlay */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <Onboarding
+            isDark={isDark}
+            onComplete={completeOnboarding}
+            telegramUser={user}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 }
