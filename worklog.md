@@ -274,3 +274,114 @@ Work Log:
 
 Stage Summary:
 - Bright, chaotic particles with large glow halos
+---
+Task ID: v3-1
+Agent: Main Agent
+Task: Fix Home.useCallback[fetchEvents error
+
+Work Log:
+- Refactored fetchEvents to use useRef pattern instead of direct useCallback dependency in useEffect
+- fetchEvents still uses useCallback for stability, but useEffect reads from ref
+- Eliminates the React exhaustive-deps warning/error
+
+Stage Summary:
+- No more useCallback dependency warnings
+- Clean lint output
+
+---
+Task ID: v3-2
+Agent: Main Agent
+Task: Ghost color to #73FFE4 + creepy animation
+
+Work Log:
+- Changed ghost body color from #406CFF to #73FFE4
+- Changed emissive to #40BFA8, inner glow to #73FFE4
+- Added creepy animation effects:
+  - Random flicker (0.8% chance bright flash, 1.2% chance dim)
+  - Random twitch (0.3% chance, lasts 6-14 frames)
+  - Irregular breathing scale pulse
+  - Eye jitter (looking around)
+  - Mouth subtle movement
+  - Particle opacity flicker
+  - Pulsing light with irregular pattern
+- Updated particles and light to cyan color palette
+
+Stage Summary:
+- Creepy cyan ghost with random twitches, flickers, and eerie movement
+
+---
+Task ID: v3-3
+Agent: Main Agent
+Task: More expressive EventCards
+
+Work Log:
+- Increased card height to 190px
+- Added big bold probability numbers (22px extrabold) with dynamic colors
+  - Green for high probability, blue for medium, orange for low
+- Dynamic probability bar colors based on value
+- Added "Blazing" badge for markets >$2M volume (vs "Hot" for >$500K)
+- Lucide icons for volume and time (TrendingUp, Clock)
+- Enhanced hover effect with glow shadow
+- Separated Yes/No percentages with better visual hierarchy
+
+Stage Summary:
+- Cards are more visually expressive with dynamic color-coded probabilities
+
+---
+Task ID: v3-4
+Agent: Main Agent
+Task: Smooth modal open/close animations
+
+Work Log:
+- Removed dynamic Ghost3D import from EventModal (was causing lag)
+- Changed spring animation: damping 30, stiffness 280, mass 0.8
+- Backdrop uses 0.35s ease-out fade (was instant)
+- Staggered content animations with shorter delays (0.08s instead of 0.1s)
+- Added Escape key handler via useEffect
+- Pre-computed modal content outside render condition
+- No backdrop blur on light theme for performance
+
+Stage Summary:
+- Smooth spring animations with no visible lag
+- Escape key properly closes modal
+
+---
+Task ID: v3-5
+Agent: Main Agent
+Task: Day/Night theme toggle
+
+Work Log:
+- Added ThemeProvider from next-themes in layout.tsx (defaultTheme="dark")
+- Added Sun/Moon toggle button with rotation animation in stats bar
+- Created glass-card-light CSS class for light theme
+- Updated all components with isDark prop support:
+  - EventCard: separate light/dark gradients, category colors, text colors
+  - EventModal: light backdrop, glass cards, text colors
+  - ProfileHeader: light borders, avatar colors, text
+  - ProfileMenu: light glass morphism, item colors
+  - SkeletonCard: light gradient backgrounds
+  - GhostParticles: fewer particles, dimmer in light mode
+  - page.tsx: ambient glows, footer, stats bar all theme-aware
+- Updated skeleton shimmer to use neutral gray (works in both themes)
+- 500ms color transition on theme switch
+
+Stage Summary:
+- Full day/night theme with smooth 500ms transitions
+- Toggle button with animated Sun/Moon icon rotation
+
+---
+Task ID: v3-6
+Agent: Main Agent
+Task: Telegram authorization
+
+Work Log:
+- Added isAuthorized boolean to TelegramUser interface
+- In Telegram env: isAuthorized=true with ShieldCheck icon in menu
+- In dev/preview: isAuthorized=false with "Preview" badge in amber
+- ProfileHeader shows auth status (shield icon for authorized, "Preview" badge for dev)
+- ProfileMenu shows "Telegram" with ShieldCheck for auth users, "Preview Mode" for dev
+- Dynamic import for @tma.js/sdk still used for proper TMA integration
+
+Stage Summary:
+- Visual distinction between Telegram authorized and dev preview modes
+- ShieldCheck icon for auth, amber "Preview" badge for dev

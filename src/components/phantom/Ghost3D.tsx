@@ -8,9 +8,15 @@ import * as THREE from 'three';
 function GhostBody() {
   const meshRef = useRef<THREE.Group>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+  const leftEyeRef = useRef<THREE.Mesh>(null);
+  const rightEyeRef = useRef<THREE.Mesh>(null);
+  const mouthRef = useRef<THREE.Group>(null);
+  const flickerRef = useRef(0);
+  const twitchTimer = useRef(0);
+  const isTwitching = useRef(false);
+  const twitchIntensity = useRef(0);
 
   const ghostGeometry = useMemo(() => {
-    // Create ghost profile for LatheGeometry
     const points: THREE.Vector2[] = [];
     const segments = 40;
 
@@ -20,27 +26,22 @@ function GhostBody() {
       let y: number;
 
       if (t < 0.05) {
-        // Top of head - dome peak
         const angle = (t / 0.05) * Math.PI * 0.5;
         x = Math.sin(angle) * 0.05;
         y = 1.6 + Math.cos(angle) * 0.15;
       } else if (t < 0.35) {
-        // Head dome
         const angle = ((t - 0.05) / 0.30) * Math.PI * 0.5;
         x = 0.05 + Math.sin(angle) * 0.65;
         y = 1.6 - (1 - Math.cos(angle)) * 0.5;
       } else if (t < 0.65) {
-        // Body - slight taper
         const bt = (t - 0.35) / 0.30;
         x = 0.7 - bt * 0.15;
         y = 1.1 - bt * 1.3;
       } else if (t < 0.85) {
-        // Lower body - slight flare
         const bt = (t - 0.65) / 0.20;
         x = 0.55 + bt * 0.15;
         y = -0.2 - bt * 0.6;
       } else {
-        // Bottom with wave
         const bt = (t - 0.85) / 0.15;
         const wave = Math.sin(bt * Math.PI * 3) * 0.08;
         x = 0.7 - bt * 0.15 + wave;
@@ -51,20 +52,19 @@ function GhostBody() {
     }
 
     const geo = new THREE.LatheGeometry(points, 32);
-    
-    // Modify bottom vertices for scallop effect
+
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const py = pos.getY(i);
       const px = pos.getX(i);
       const pz = pos.getZ(i);
-      
+
       if (py < -0.7) {
         const angle = Math.atan2(pz, px);
         const scallop = Math.sin(angle * 4) * 0.12;
         const distFromCenter = Math.sqrt(px * px + pz * pz);
         const normalizedDist = py / -1.05;
-        
+
         if (distFromCenter > 0.01) {
           const newScale = 1 + scallop * normalizedDist;
           pos.setX(i, px * newScale);
@@ -73,44 +73,104 @@ function GhostBody() {
         pos.setY(i, py + Math.sin(angle * 4) * 0.06);
       }
     }
-    
+
     geo.computeVertexNormals();
     return geo;
   }, []);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    
-    if (meshRef.current) {
-      // Gentle float
-      meshRef.current.position.y = Math.sin(time * 0.8) * 0.15;
-      // Subtle rotation
-      meshRef.current.rotation.z = Math.sin(time * 0.5) * 0.05;
-      // Pulse scale
-      const pulse = 1 + Math.sin(time * 1.5) * 0.03;
-      meshRef.current.scale.setScalar(pulse);
+
+    // Creepy flicker effect
+    flickerRef.current += 1;
+    const flickerChance = Math.random();
+    let flickerMult = 1;
+    if (flickerChance < 0.008) {
+      // Sudden bright flash
+      flickerMult = 1.4;
+    } else if (flickerChance < 0.02) {
+      // Dim moment
+      flickerMult = 0.5;
     }
-    
+
+    // Random twitch
+    twitchTimer.current += 1;
+    if (!isTwitching.current && Math.random() < 0.003) {
+      isTwitching.current = true;
+      twitchTimer.current = 0;
+      twitchIntensity.current = 0.08 + Math.random() * 0.15;
+    }
+    if (isTwitching.current) {
+      if (twitchTimer.current > 6 + Math.random() * 8) {
+        isTwitching.current = false;
+      }
+    }
+
+    const twitchX = isTwitching.current
+      ? Math.sin(twitchTimer.current * 3.5) * twitchIntensity.current
+      : 0;
+    const twitchY = isTwitching.current
+      ? Math.cos(twitchTimer.current * 4.2) * twitchIntensity.current * 0.5
+      : 0;
+
+    if (meshRef.current) {
+      // Smooth float with subtle creepy sway
+      meshRef.current.position.y = Math.sin(time * 0.6) * 0.18 + twitchY;
+      meshRef.current.position.x = Math.sin(time * 0.3) * 0.04 + twitchX;
+
+      // Slow eerie rotation
+      meshRef.current.rotation.z = Math.sin(time * 0.35) * 0.08 + (isTwitching.current ? Math.sin(twitchTimer.current * 5) * 0.05 : 0);
+      meshRef.current.rotation.y = Math.sin(time * 0.25) * 0.12;
+
+      // Creepy pulse - irregular breathing
+      const breathPhase = Math.sin(time * 0.8) * 0.5 + 0.5;
+      const breathScale = 1 + breathPhase * 0.04;
+      const jitterScale = 1 + (Math.random() - 0.5) * 0.006;
+      meshRef.current.scale.setScalar(breathScale * jitterScale * flickerMult);
+    }
+
     if (materialRef.current) {
-      // Pulse emissive intensity
-      const emissivePulse = 0.3 + Math.sin(time * 1.5) * 0.15;
-      materialRef.current.emissiveIntensity = emissivePulse;
+      // Eerie pulsing glow
+      const emissivePulse = 0.25 + Math.sin(time * 1.2) * 0.12 + Math.sin(time * 3.7) * 0.05;
+      materialRef.current.emissiveIntensity = emissivePulse * flickerMult;
+      // Subtle opacity flicker
+      materialRef.current.opacity = 0.65 + Math.sin(time * 2.1) * 0.08 + (flickerMult < 1 ? -0.15 : 0);
+    }
+
+    // Eye jitter - looking around creepily
+    if (leftEyeRef.current) {
+      const eyeJitterX = Math.sin(time * 1.3) * 0.015 + (isTwitching.current ? Math.sin(twitchTimer.current * 8) * 0.02 : 0);
+      const eyeJitterY = Math.cos(time * 0.9) * 0.01;
+      leftEyeRef.current.position.x = -0.22 + eyeJitterX;
+      leftEyeRef.current.position.y = 1.05 + eyeJitterY;
+    }
+    if (rightEyeRef.current) {
+      const eyeJitterX = Math.sin(time * 1.3) * 0.015 + (isTwitching.current ? Math.sin(twitchTimer.current * 8) * 0.02 : 0);
+      const eyeJitterY = Math.cos(time * 0.9) * 0.01;
+      rightEyeRef.current.position.x = 0.22 + eyeJitterX;
+      rightEyeRef.current.position.y = 1.05 + eyeJitterY;
+    }
+
+    // Mouth creepy movement
+    if (mouthRef.current) {
+      mouthRef.current.rotation.z = Math.sin(time * 0.7) * 0.05;
+      mouthRef.current.position.y = 0.8 + Math.sin(time * 1.8) * 0.015;
     }
   });
 
   return (
     <group ref={meshRef}>
-      {/* Ghost body */}
+      {/* Ghost body - #73FFE4 color */}
       <mesh geometry={ghostGeometry} material={materialRef}>
         <meshStandardMaterial
           ref={materialRef}
-          color="#406CFF"
-          emissive="#3051BF"
-          emissiveIntensity={0.3}
+          color="#73FFE4"
+          emissive="#40BFA8"
+          emissiveIntensity={0.25}
           transparent
-          opacity={0.7}
-          roughness={0.3}
-          metalness={0.1}
+          opacity={0.65}
+          roughness={0.25}
+          metalness={0.05}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -119,105 +179,126 @@ function GhostBody() {
       <mesh position={[0, 0.3, 0]}>
         <sphereGeometry args={[0.45, 16, 16]} />
         <meshStandardMaterial
-          color="#7393FF"
-          emissive="#406CFF"
-          emissiveIntensity={0.6}
+          color="#73FFE4"
+          emissive="#30BFA3"
+          emissiveIntensity={0.5}
           transparent
-          opacity={0.3}
+          opacity={0.25}
           roughness={0.5}
         />
       </mesh>
 
-      {/* Left eye - happy squint */}
+      {/* Left eye - creepy hollow look */}
       <group position={[-0.22, 1.05, 0.55]}>
-        <mesh>
+        <mesh ref={leftEyeRef} position={[0, 0, 0]}>
           <sphereGeometry args={[0.09, 16, 16]} />
           <meshStandardMaterial
             color="#070714"
-            emissive="#003BFF"
-            emissiveIntensity={0.2}
+            emissive="#73FFE4"
+            emissiveIntensity={0.15}
             roughness={0.8}
           />
         </mesh>
+        {/* Creepy eye glow */}
+        <mesh position={[0, 0, 0.03]}>
+          <sphereGeometry args={[0.045, 8, 8]} />
+          <meshStandardMaterial
+            color="#73FFE4"
+            emissive="#73FFE4"
+            emissiveIntensity={0.9}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
         {/* Eye highlight */}
-        <mesh position={[0.02, 0.03, 0.04]}>
-          <sphereGeometry args={[0.035, 8, 8]} />
+        <mesh position={[0.02, 0.03, 0.06]}>
+          <sphereGeometry args={[0.02, 8, 8]} />
           <meshStandardMaterial
             color="#FFFFFF"
             emissive="#FFFFFF"
-            emissiveIntensity={0.8}
+            emissiveIntensity={0.6}
           />
         </mesh>
       </group>
 
-      {/* Right eye - happy squint */}
+      {/* Right eye - creepy hollow look */}
       <group position={[0.22, 1.05, 0.55]}>
-        <mesh>
+        <mesh ref={rightEyeRef} position={[0, 0, 0]}>
           <sphereGeometry args={[0.09, 16, 16]} />
           <meshStandardMaterial
             color="#070714"
-            emissive="#003BFF"
-            emissiveIntensity={0.2}
+            emissive="#73FFE4"
+            emissiveIntensity={0.15}
             roughness={0.8}
           />
         </mesh>
+        {/* Creepy eye glow */}
+        <mesh position={[0, 0, 0.03]}>
+          <sphereGeometry args={[0.045, 8, 8]} />
+          <meshStandardMaterial
+            color="#73FFE4"
+            emissive="#73FFE4"
+            emissiveIntensity={0.9}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
         {/* Eye highlight */}
-        <mesh position={[0.02, 0.03, 0.04]}>
-          <sphereGeometry args={[0.035, 8, 8]} />
+        <mesh position={[0.02, 0.03, 0.06]}>
+          <sphereGeometry args={[0.02, 8, 8]} />
           <meshStandardMaterial
             color="#FFFFFF"
             emissive="#FFFFFF"
-            emissiveIntensity={0.8}
+            emissiveIntensity={0.6}
           />
         </mesh>
       </group>
 
-      {/* Laughing mouth - open smile */}
-      <group position={[0, 0.8, 0.55]} rotation={[0, 0, 0]}>
-        {/* Mouth shape using a torus segment */}
+      {/* Creepy smile */}
+      <group ref={mouthRef} position={[0, 0.8, 0.55]}>
         <mesh>
-          <torusGeometry args={[0.15, 0.035, 8, 16, Math.PI]} />
+          <torusGeometry args={[0.15, 0.03, 8, 16, Math.PI]} />
           <meshStandardMaterial
             color="#070714"
-            emissive="#0027A6"
-            emissiveIntensity={0.3}
+            emissive="#73FFE4"
+            emissiveIntensity={0.2}
             roughness={0.8}
           />
         </mesh>
-        {/* Tongue hint */}
+        {/* Tongue */}
         <mesh position={[0, -0.08, 0.02]} rotation={[0.3, 0, 0]}>
-          <sphereGeometry args={[0.07, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
+          <sphereGeometry args={[0.06, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
           <meshStandardMaterial
-            color="#8F40FF"
-            emissive="#6A00FF"
+            color="#73FFE4"
+            emissive="#40BFA8"
             emissiveIntensity={0.3}
             roughness={0.6}
             transparent
-            opacity={0.8}
+            opacity={0.7}
           />
         </mesh>
       </group>
 
-      {/* Rosy cheeks */}
+      {/* Ghostly cheeks */}
       <mesh position={[-0.4, 0.85, 0.4]}>
-        <sphereGeometry args={[0.08, 8, 8]} />
+        <sphereGeometry args={[0.06, 8, 8]} />
         <meshStandardMaterial
-          color="#8F40FF"
-          emissive="#8F40FF"
-          emissiveIntensity={0.2}
+          color="#73FFE4"
+          emissive="#73FFE4"
+          emissiveIntensity={0.15}
           transparent
-          opacity={0.4}
+          opacity={0.25}
           roughness={0.8}
         />
       </mesh>
       <mesh position={[0.4, 0.85, 0.4]}>
-        <sphereGeometry args={[0.08, 8, 8]} />
+        <sphereGeometry args={[0.06, 8, 8]} />
         <meshStandardMaterial
-          color="#8F40FF"
-          emissive="#8F40FF"
-          emissiveIntensity={0.2}
+          color="#73FFE4"
+          emissive="#73FFE4"
+          emissiveIntensity={0.15}
           transparent
-          opacity={0.4}
+          opacity={0.25}
           roughness={0.8}
         />
       </mesh>
@@ -245,12 +326,21 @@ function Particles() {
       const pos = particlesRef.current.geometry.attributes.position;
       for (let i = 0; i < count; i++) {
         const y = pos.getY(i);
-        pos.setY(i, y + 0.003 + Math.sin(time + i) * 0.002);
+        const x = pos.getX(i);
+        // Creepy floating - irregular speeds
+        const speed = 0.002 + Math.sin(time * 0.5 + i * 0.7) * 0.001;
+        pos.setY(i, y + speed + Math.sin(time + i) * 0.001);
+        pos.setX(i, x + Math.sin(time * 0.3 + i * 1.5) * 0.001);
         if (pos.getY(i) > 3) {
           pos.setY(i, -2.5);
+          pos.setX(i, (Math.random() - 0.5) * 4);
         }
       }
       pos.needsUpdate = true;
+
+      // Particle opacity flicker
+      const mat = particlesRef.current.material as THREE.PointsMaterial;
+      mat.opacity = 0.4 + Math.sin(time * 3) * 0.15 + Math.sin(time * 7.3) * 0.05;
     }
   });
 
@@ -265,10 +355,10 @@ function Particles() {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.03}
-        color="#7393FF"
+        size={0.035}
+        color="#73FFE4"
         transparent
-        opacity={0.6}
+        opacity={0.5}
         sizeAttenuation
       />
     </points>
@@ -281,7 +371,11 @@ function PulsingLight() {
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
     if (lightRef.current) {
-      lightRef.current.intensity = 1.5 + Math.sin(time * 1.5) * 0.8;
+      // Creepy irregular pulsing
+      const base = 1.5 + Math.sin(time * 1.0) * 0.6;
+      const flicker = Math.sin(time * 4.7) * 0.3 + Math.sin(time * 7.1) * 0.15;
+      const dim = Math.random() < 0.01 ? 0.3 : 1;
+      lightRef.current.intensity = (base + flicker) * dim;
     }
   });
 
@@ -289,7 +383,7 @@ function PulsingLight() {
     <pointLight
       ref={lightRef}
       position={[0, 0.5, 2]}
-      color="#406CFF"
+      color="#73FFE4"
       intensity={1.5}
       distance={5}
     />
@@ -304,10 +398,10 @@ export default function Ghost3D() {
         gl={{ antialias: true, alpha: true }}
         style={{ background: 'transparent' }}
       >
-        <ambientLight intensity={0.3} color="#7393FF" />
-        <directionalLight position={[2, 3, 4]} intensity={0.5} color="#FFFFFF" />
+        <ambientLight intensity={0.25} color="#73FFE4" />
+        <directionalLight position={[2, 3, 4]} intensity={0.4} color="#FFFFFF" />
         <PulsingLight />
-        <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.3}>
+        <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.2}>
           <GhostBody />
         </Float>
         <Particles />

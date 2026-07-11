@@ -173,6 +173,35 @@ body {
     0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
+/* Glass card - Light theme */
+.glass-card-light {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0.6) 100%
+  );
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 0 0 0.5px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.glass-card-light:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 0 0 0.5px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, #406CFF 0%, #8F40FF 50%, #00FFCD 100%);
@@ -246,9 +275,9 @@ body {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.03) 75%
+    rgba(128, 128, 128, 0.06) 25%,
+    rgba(128, 128, 128, 0.15) 50%,
+    rgba(128, 128, 128, 0.06) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
