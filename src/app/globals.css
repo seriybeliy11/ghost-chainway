@@ -144,25 +144,33 @@ body {
   overflow-x: hidden;
 }
 
-/* Glass card effect */
+/* Glass card effect - Apple Glass style */
 .glass-card {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.07) 0%,
     rgba(255, 255, 255, 0.02) 100%
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 0 0 0.5px rgba(255, 255, 255, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .glass-card:hover {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.1) 0%,
     rgba(255, 255, 255, 0.04) 100%
   );
-  border-color: rgba(64, 108, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 0 0 0.5px rgba(255, 255, 255, 0.08),
+    0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* Gradient text */

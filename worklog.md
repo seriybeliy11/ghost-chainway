@@ -195,3 +195,82 @@ Stage Summary:
 - Full end-to-end verification passed
 - Live Polymarket data flowing correctly (e.g., FIFA World Cup markets, LoL MSI, etc.)
 - All UI components rendering properly
+
+---
+Task ID: v2-1
+Agent: Main Agent
+Task: Compact profile menu popup
+
+Work Log:
+- Rewrote ProfileMenu.tsx from full-screen drawer to small popup
+- Positioned near profile button (top-16 right-4)
+- Compact 224px width with glass morphism
+- Includes avatar, name, Premium badge, 3 menu items, logout
+- Spring animation entrance
+
+Stage Summary:
+- Small animated popup menu instead of full drawer
+
+---
+Task ID: v2-2
+Agent: Main Agent
+Task: Refresh modal with 3D laughing ghost
+
+Work Log:
+- Created RefreshModal.tsx component
+- Integrates Ghost3D (Three.js laughing ghost) in modal
+- Shows "Refreshing markets" + "Scanning for the hottest events..." text
+- Pulsing background glow effect
+- Appears on refresh tap, auto-closes after data loads
+
+Stage Summary:
+- 3D ghost appears during refresh in a centered glass modal
+
+---
+Task ID: v2-3
+Agent: Main Agent
+Task: Replace event photos with animated pulse placeholders
+
+Work Log:
+- Removed image loading from EventCard.tsx
+- Created animated gradient background with 3 floating orbs per card
+- Orbs use framer-motion for smooth x/y/scale animations
+- Dark gradient overlay for text readability
+- Updated SkeletonCard.tsx to match new style
+
+Stage Summary:
+- Each card has unique animated gradient background (no external images)
+
+---
+Task ID: v2-4
+Agent: Main Agent
+Task: Centered event modal with more glass/soft elements
+
+Work Log:
+- Rewrote EventModal.tsx from bottom-sheet to centered modal
+- Uses flex items-center justify-center for centering
+- Max-width 384px, max-height 85vh with scroll
+- Added animated background orbs inside modal
+- Stats, probability, and CTA all wrapped in glass-card
+- Removed event image dependency
+
+Stage Summary:
+- Centered glass modal with animated orbs and soft design
+
+---
+Task ID: v2-5
+Agent: Main Agent
+Task: Brighter and more chaotic particles
+
+Work Log:
+- Rewrote GhostParticles.tsx with chaotic movement
+- Particles spawn from bottom, left, and right edges
+- Higher speed (1.5x), larger glow radius (8x size)
+- Random direction changes every ~200 frames
+- Double wobble (sin + cos with different frequencies)
+- Brighter core (90% lightness, 0.9 opacity cap)
+- 4 color hues: blue, purple, cyan, violet
+- 30 particles (was 25)
+
+Stage Summary:
+- Bright, chaotic particles with large glow halos
