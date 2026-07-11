@@ -290,7 +290,6 @@ export default function Home() {
       <AnimatePresence>
         {showOnboarding && (
           <Onboarding
-            isDark={isDark}
             onComplete={completeOnboarding}
             telegramUser={user}
           />
