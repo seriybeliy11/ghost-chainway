@@ -15,6 +15,7 @@ import type { PolymarketEvent } from '@/components/phantom/EventCard';
 import SkeletonCard from '@/components/phantom/SkeletonCard';
 import GhostIcon from '@/components/phantom/GhostIcon';
 import Onboarding from '@/components/phantom/Onboarding';
+import PhantomVisionView from '@/components/phantom/PhantomVisionView';
 
 const Ghost3D = dynamic(() => import('@/components/phantom/Ghost3D'), {
   ssr: false,
@@ -39,6 +40,7 @@ export default function Home() {
   const [showGhostLoader, setShowGhostLoader] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
+  const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -284,7 +286,18 @@ export default function Home() {
       {/* Overlays */}
       <ProfileMenu user={user} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isDark={isDark} />
       <RefreshModal isOpen={isRefreshing && !isLoading} isDark={isDark} />
-      <EventModal event={selectedEvent} isOpen={!!selectedEvent} onClose={() => setSelectedEvent(null)} isDark={isDark} />
+      <EventModal
+        event={selectedEvent}
+        isOpen={!!selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        onPhantomVision={selectedEvent ? () => setVisionEvent(selectedEvent) : undefined}
+        isDark={isDark}
+      />
+      <PhantomVisionView
+        event={visionEvent}
+        isOpen={!!visionEvent}
+        onClose={() => setVisionEvent(null)}
+      />
 
       {/* Onboarding overlay */}
       <AnimatePresence>

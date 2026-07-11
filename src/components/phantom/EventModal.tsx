@@ -2,11 +2,12 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useCallback } from 'react';
-import { X, TrendingUp, Clock, Flame, BarChart3, ExternalLink, Activity } from 'lucide-react';
+import { X, TrendingUp, Clock, Flame, BarChart3, ExternalLink, Activity, Eye, Sparkles } from 'lucide-react';
 
 interface EventModalProps {
   event: {
     id: string;
+    slug: string;
     question: string;
     outcomes: string[];
     outcomePrices: string[];
@@ -18,10 +19,11 @@ interface EventModalProps {
   } | null;
   isOpen: boolean;
   onClose: () => void;
+  onPhantomVision?: () => void;
   isDark?: boolean;
 }
 
-export default function EventModal({ event, isOpen, onClose, isDark = true }: EventModalProps) {
+export default function EventModal({ event, isOpen, onClose, onPhantomVision, isDark = true }: EventModalProps) {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
   }, [onClose]);
@@ -231,8 +233,26 @@ export default function EventModal({ event, isOpen, onClose, isDark = true }: Ev
                     </div>
                   )}
 
-                  {/* CTA */}
-                  <div className="px-5 pb-5">
+                  {/* CTA buttons */}
+                  <div className="px-5 pb-5 space-y-2.5">
+                    {/* Phantom Vision */}
+                    {onPhantomVision && (
+                      <button
+                        onClick={() => { onClose(); onPhantomVision(); }}
+                        className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2.5 transition-transform active:scale-[0.98] relative overflow-hidden"
+                        style={{
+                          background: 'linear-gradient(135deg, #00A685, #73FFE4, #00A685)',
+                          boxShadow: isDark
+                            ? '0 8px 32px rgba(115,255,228,0.2)'
+                            : '0 8px 32px rgba(52,211,153,0.2)',
+                        }}
+                      >
+                        <Eye className="w-4 h-4" />
+                        Phantom Vision
+                        <Sparkles className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {/* Trade on Polymarket */}
                     <button
                       className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
                       style={{

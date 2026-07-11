@@ -5,6 +5,7 @@ import { Flame, TrendingUp, Clock } from 'lucide-react';
 
 export interface PolymarketEvent {
   id: string;
+  slug: string;
   question: string;
   outcomes: string[];
   outcomePrices: string[];

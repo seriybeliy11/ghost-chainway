@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 interface GammaMarket {
   id: string;
+  slug?: string;
   question: string;
   outcomes: string;
   outcomePrices: string;
@@ -19,6 +20,7 @@ interface GammaMarket {
 
 interface TransformedMarket {
   id: string;
+  slug: string;
   question: string;
   outcomes: string[];
   outcomePrices: string[];
@@ -95,6 +97,7 @@ async function fetchPolymarketEvents(): Promise<TransformedMarket[]> {
       .slice(0, 12)
       .map((market) => ({
         id: market.id,
+        slug: market.slug || market.id,
         question: market.question,
         outcomes: JSON.parse(market.outcomes || '[]'),
         outcomePrices: JSON.parse(market.outcomePrices || '[]'),
@@ -115,6 +118,7 @@ function getFallbackData(): TransformedMarket[] {
   return [
     {
       id: 'fallback-1',
+      slug: 'will-bitcoin-reach-150000-by-end-of-2025',
       question: 'Will Bitcoin reach $150,000 by end of 2025?',
       outcomes: ['Yes', 'No'],
       outcomePrices: ['0.42', '0.58'],
@@ -127,6 +131,7 @@ function getFallbackData(): TransformedMarket[] {
     },
     {
       id: 'fallback-2',
+      slug: 'will-the-fed-cut-interest-rates-in-q3-2025',
       question: 'Will the Fed cut interest rates in Q3 2025?',
       outcomes: ['Yes', 'No'],
       outcomePrices: ['0.65', '0.35'],
@@ -139,6 +144,7 @@ function getFallbackData(): TransformedMarket[] {
     },
     {
       id: 'fallback-3',
+      slug: 'will-ai-achieve-agi-before-2030',
       question: 'Will AI achieve AGI before 2030?',
       outcomes: ['Yes', 'No'],
       outcomePrices: ['0.28', '0.72'],
@@ -151,6 +157,7 @@ function getFallbackData(): TransformedMarket[] {
     },
     {
       id: 'fallback-4',
+      slug: 'will-tesla-stock-exceed-400-by-july-2025',
       question: 'Will Tesla stock exceed $400 by July 2025?',
       outcomes: ['Yes', 'No'],
       outcomePrices: ['0.55', '0.45'],
@@ -163,6 +170,7 @@ function getFallbackData(): TransformedMarket[] {
     },
     {
       id: 'fallback-5',
+      slug: 'will-there-be-a-new-covid-variant-alert-in-2025',
       question: 'Will there be a new COVID variant alert in 2025?',
       outcomes: ['Yes', 'No'],
       outcomePrices: ['0.38', '0.62'],
@@ -175,6 +183,7 @@ function getFallbackData(): TransformedMarket[] {
     },
     {
       id: 'fallback-6',
+      slug: 'will-ethereum-etf-approval-happen-in-2025',
       question: 'Will Ethereum ETF approval happen in 2025?',
       outcomes: ['Yes', 'No'],
       outcomePrices: ['0.72', '0.28'],
