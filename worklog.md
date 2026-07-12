@@ -429,3 +429,25 @@ Stage Summary:
 - Full SSE streaming pipeline: Dify → Next.js proxy → Client SSE reader → Progressive UI
 - DIFY_API_URL format flexible: supports both base URL and full endpoint URL
 - 502 error root cause: https://udify.app/v1/workflows/run returns 404 — user needs to verify correct API endpoint URL
+
+---
+Task ID: v4-3
+Agent: Main Agent
+Task: Fix Phantom Vision webhook integration — URL parameter passing
+
+Work Log:
+- Tested Udify webhook trigger with various body formats (JSON, form-urlencoded, nested objects)
+- Discovered that Udify webhook expects `url` as QUERY PARAMETER, not in POST body
+- Confirmed: POST /triggers/webhook/{id}?url=<encoded_url> with empty JSON body {} → 200 OK
+- Confirmed: POST body {"url": "..."} → 400 "Required parameter missing: url"
+- Tested standard Dify API (udify.app/v1/workflows/run) — returns 404 (not available on Udify)
+- Tested multiple alternative API paths (/api/v1/, /eapp/, /console/api/, etc.) — all 404
+- Rewrote route.ts to use url as query parameter in webhook URL
+- Webhook now returns 200 but is ASYNC (fire-and-forget, returns {"message":"OK"} only)
+- Standard Dify API endpoints are NOT accessible on Udify hosted platform
+
+Stage Summary:
+- Udify webhook trigger requires url as QUERY PARAMETER: ?url=<encoded_url>
+- Webhook is asynchronous — does not return pipeline result
+- User needs to enable "Return workflow result" in Dify webhook trigger node settings to get sync results
+- Code updated to correctly call webhook with url as query param
