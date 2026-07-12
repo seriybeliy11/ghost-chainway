@@ -385,3 +385,22 @@ Work Log:
 Stage Summary:
 - Visual distinction between Telegram authorized and dev preview modes
 - ShieldCheck icon for auth, amber "Preview" badge for dev
+
+---
+Task ID: v4-1
+Agent: Main Agent
+Task: Add Dify .env credentials and fix API route
+
+Work Log:
+- Added DIFY_API_URL and DIFY_WORKFLOW_API_KEY to .env
+- Fixed DIFY_API_URL from full workflow page URL to base URL (https://udify.app)
+- Restored /v1/workflows/run path in API route (standard Dify workflow endpoint)
+- Added 2-minute AbortController timeout for Dify fetch
+- Added descriptive error message for timeout vs generic error
+- Verified full flow in browser: Card → Modal → Phantom Vision → Back to Markets
+
+Stage Summary:
+- .env configured with Dify credentials
+- API route correctly calls https://udify.app/v1/workflows/run with Bearer auth
+- Input to Dify: { inputs: { url: "https://gamma-api.polymarket.com/events?slug={slug}" }, response_mode: "blocking" }
+- Full UI flow verified: event card click → modal → Phantom Vision button → full-screen vision view → back navigation

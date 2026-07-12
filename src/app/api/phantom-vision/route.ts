@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DIFY_API_URL = process.env.DIFY_API_URL || 'https://api.dify.ai';
+const DIFY_API_URL = process.env.DIFY_API_URL || '';
 const DIFY_WORKFLOW_KEY = process.env.DIFY_WORKFLOW_API_KEY || '';
 
 interface DifyWorkflowResponse {
@@ -39,18 +39,27 @@ export async function POST(request: NextRequest) {
 
     const gammaUrl = `https://gamma-api.polymarket.com/events?slug=${encodeURIComponent(slug)}`;
 
-    const difyResponse = await fetch(`${DIFY_API_URL}/v1/workflows/run`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${DIFY_WORKFLOW_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: { url: gammaUrl },
-        response_mode: 'blocking',
-        user: 'phantom-tma',
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120_000); // 2 min timeout
+
+    let difyResponse: Response;
+    try {
+      difyResponse = await fetch(`${DIFY_API_URL}/v1/workflows/run`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${DIFY_WORKFLOW_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: { url: gammaUrl },
+          response_mode: 'blocking',
+          user: 'phantom-tma',
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!difyResponse.ok) {
       const errorText = await difyResponse.text();
@@ -84,8 +93,11 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Phantom Vision error:', error);
+    const msg = error instanceof Error && error.name === 'AbortError'
+      ? 'Pipeline timed out after 2 minutes. Try again.'
+      : 'Internal server error';
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: msg },
       { status: 500 }
     );
   }
