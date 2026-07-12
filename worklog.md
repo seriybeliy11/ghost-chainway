@@ -404,3 +404,28 @@ Stage Summary:
 - API route correctly calls https://udify.app/v1/workflows/run with Bearer auth
 - Input to Dify: { inputs: { url: "https://gamma-api.polymarket.com/events?slug={slug}" }, response_mode: "blocking" }
 - Full UI flow verified: event card click → modal → Phantom Vision button → full-screen vision view → back navigation
+
+---
+Task ID: v4-2
+Agent: Main Agent
+Task: Switch to streaming mode for Dify workflow API
+
+Work Log:
+- Rewrote /api/phantom-vision/route.ts to use response_mode: "streaming"
+- API route now proxies SSE stream from Dify to client (ReadableStream passthrough)
+- Added getDifyEndpoint() — if DIFY_API_URL ends with /run, uses it directly; otherwise appends /v1/workflows/run
+- Added console.log for slug, gamma URL, and Dify endpoint for debugging
+- 3-minute AbortController timeout
+- Better error messages with response body snippet
+- Rewrote PhantomVisionView.tsx with SSE stream consumer:
+  - 4 states: loading → streaming → success/error
+  - Parses Dify SSE events: workflow_started, node_started, node_finished, text_chunk, message_end, workflow_finished, error
+  - Progressive text rendering during streaming with blinking cursor
+  - Node title indicator showing which step is active
+  - Auto-scroll during streaming
+  - Final output extraction from workflow_finished event
+
+Stage Summary:
+- Full SSE streaming pipeline: Dify → Next.js proxy → Client SSE reader → Progressive UI
+- DIFY_API_URL format flexible: supports both base URL and full endpoint URL
+- 502 error root cause: https://udify.app/v1/workflows/run returns 404 — user needs to verify correct API endpoint URL
