@@ -1,24 +1,71 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const DIFY_API_URL = process.env.DIFY_API_URL || '';
 const DIFY_WORKFLOW_KEY = process.env.DIFY_WORKFLOW_API_KEY || '';
+
+function extractText(obj: Record<string, unknown>): string {
+  const keys = ['text', 'result', 'output', 'answer', 'response', 'analysis', 'content'];
+  for (const key of keys) {
+    const val = obj[key];
+    if (typeof val === 'string' && val.trim()) return val;
+  }
+  for (const val of Object.values(obj)) {
+    if (typeof val === 'string' && val.trim()) return val;
+  }
+  return '';
+}
+
+// Health check — test webhook reachability
+export async function GET() {
+  if (!DIFY_API_URL) {
+    return NextResponse.json({ ok: false, error: 'DIFY_API_URL not set' });
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+
+    const headers: Record<string, string> = {};
+    if (DIFY_WORKFLOW_KEY) {
+      headers['Authorization'] = `Bearer ${DIFY_WORKFLOW_KEY}`;
+    }
+
+    const res = await fetch(DIFY_API_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ url: 'https://gamma-api.polymarket.com/events?slug=test' }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    const ct = res.headers.get('content-type') || '';
+    const body = await res.text();
+
+    return NextResponse.json({
+      ok: res.ok,
+      status: res.status,
+      contentType: ct,
+      bodyPreview: body.slice(0, 500),
+    });
+  } catch (err) {
+    return NextResponse.json({
+      ok: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { slug } = await request.json();
 
     if (!slug || typeof slug !== 'string') {
-      return new Response(JSON.stringify({ error: 'slug is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return NextResponse.json({ error: 'slug is required' }, { status: 400 });
     }
 
     if (!DIFY_API_URL) {
-      return new Response(JSON.stringify({ error: 'Phantom Vision is not configured' }), {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return NextResponse.json({ error: 'Phantom Vision is not configured' }, { status: 503 });
     }
 
     const gammaUrl = `https://gamma-api.polymarket.com/events?slug=${encodeURIComponent(slug)}`;
@@ -47,123 +94,53 @@ export async function POST(request: NextRequest) {
       clearTimeout(timeout);
     }
 
-    console.log('[Phantom Vision] response status:', difyResponse.status);
+    console.log('[Phantom Vision] status:', difyResponse.status);
     console.log('[Phantom Vision] content-type:', difyResponse.headers.get('content-type'));
 
-    // Non-OK → return JSON error
+    // Read response as text first — safe for any format
+    const responseText = await difyResponse.text();
+    console.log('[Phantom Vision] body:', responseText.slice(0, 1000));
+
     if (!difyResponse.ok) {
-      const errorText = await difyResponse.text();
-      console.error('[Phantom Vision] error body:', errorText.slice(0, 500));
-      return new Response(
-        JSON.stringify({ error: `Pipeline ${difyResponse.status}: ${errorText.slice(0, 300)}` }),
-        { status: 502, headers: { 'Content-Type': 'application/json' } }
+      return NextResponse.json(
+        { error: `Webhook ${difyResponse.status}: ${responseText.slice(0, 300)}` },
+        { status: 502 }
       );
     }
 
-    const ct = difyResponse.headers.get('content-type') || '';
-
-    // SSE stream → forward to client
-    if (ct.includes('text/event-stream')) {
-      if (!difyResponse.body) {
-        return new Response(
-          JSON.stringify({ error: 'Empty stream' }),
-          { status: 502, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const stream = new ReadableStream({
-        async start(ctrl) {
-          const reader = difyResponse.body!.getReader();
-          const decoder = new TextDecoder();
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              ctrl.enqueue(new TextEncoder().encode(decoder.decode(value, { stream: true })));
-            }
-          } catch (err) {
-            const msg = err instanceof Error && err.name === 'AbortError'
-              ? 'data: {"event":"error","data":"Pipeline timed out"}\n\n'
-              : 'data: {"event":"error","data":"Stream interrupted"}\n\n';
-            ctrl.enqueue(new TextEncoder().encode(msg));
-          } finally {
-            ctrl.close();
-          }
-        },
-      });
-
-      return new Response(stream, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        },
-      });
+    // Try parse as JSON
+    let json: Record<string, unknown>;
+    try {
+      json = JSON.parse(responseText);
+    } catch {
+      // Not JSON — return raw text as output
+      return NextResponse.json({ success: true, output: responseText });
     }
 
-    // JSON response → extract output and return as SSE with workflow_finished event
-    const json = await difyResponse.json();
-    console.log('[Phantom Vision] JSON response:', JSON.stringify(json).slice(0, 500));
+    // Extract text from various shapes
+    let output = '';
 
-    // Try to extract text from various response shapes
-    let outputText = '';
-
-    // Shape 1: Dify standard { data: { outputs: { ... } } }
-    if (json.data?.outputs) {
-      outputText = extractText(json.data.outputs);
-    }
-    // Shape 2: Direct { outputs: { ... } }
-    else if (json.outputs) {
-      outputText = extractText(json.outputs);
-    }
-    // Shape 3: Direct { text/result/answer: "..." }
-    else {
-      outputText = extractText(json);
+    if (json.data && typeof json.data === 'object' && json.data !== null) {
+      const d = json.data as Record<string, unknown>;
+      if (d.outputs) output = extractText(d.outputs as Record<string, unknown>);
+      else output = extractText(d);
+    } else if (json.outputs) {
+      output = extractText(json.outputs as Record<string, unknown>);
+    } else {
+      output = extractText(json);
     }
 
-    if (!outputText) {
-      outputText = JSON.stringify(json, null, 2);
+    // Fallback to full JSON stringified
+    if (!output) {
+      output = JSON.stringify(json, null, 2);
     }
 
-    // Wrap in a single SSE event so the frontend can parse it uniformly
-    const ssePayload = `data: ${JSON.stringify({
-      event: 'workflow_finished',
-      data: {
-        outputs: { text: outputText },
-        elapsed_time: 0,
-        status: 'succeeded',
-      },
-    })}\n\n`;
-
-    return new Response(ssePayload, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+    return NextResponse.json({ success: true, output });
   } catch (error) {
     console.error('[Phantom Vision] error:', error);
     const msg = error instanceof Error && error.name === 'AbortError'
       ? 'Pipeline timed out'
       : 'Internal server error';
-    return new Response(
-      JSON.stringify({ error: msg }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
-
-function extractText(obj: Record<string, unknown>): string {
-  const keys = ['text', 'result', 'output', 'answer', 'response', 'analysis', 'content'];
-  for (const key of keys) {
-    const val = obj[key];
-    if (typeof val === 'string' && val.trim()) return val;
-  }
-  for (const val of Object.values(obj)) {
-    if (typeof val === 'string' && val.trim()) return val;
-  }
-  return '';
 }

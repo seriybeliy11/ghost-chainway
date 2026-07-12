@@ -21,7 +21,7 @@ interface PhantomVisionViewProps {
   onClose: () => void;
 }
 
-/* ── Skeleton lines for loading ── */
+/* ── Skeleton ── */
 function VisionSkeleton() {
   return (
     <div className="space-y-3 animate-pulse">
@@ -39,20 +39,7 @@ function VisionSkeleton() {
   );
 }
 
-/* ── Extract text from Dify outputs ── */
-function extractOutputText(outputs: Record<string, unknown>): string {
-  const textKeys = ['text', 'result', 'output', 'answer', 'response', 'analysis', 'content'];
-  for (const key of textKeys) {
-    const val = outputs[key];
-    if (typeof val === 'string' && val.trim()) return val;
-  }
-  for (const val of Object.values(outputs)) {
-    if (typeof val === 'string' && val.trim()) return val;
-  }
-  return JSON.stringify(outputs, null, 2);
-}
-
-/* ── Simple markdown-ish renderer ── */
+/* ── Markdown-ish renderer ── */
 function RenderOutput({ text }: { text: string }) {
   const lines = text.split('\n');
 
@@ -63,25 +50,13 @@ function RenderOutput({ text }: { text: string }) {
         if (!trimmed) return <div key={i} className="h-2" />;
 
         if (trimmed.startsWith('### ')) {
-          return (
-            <h3 key={i} className="text-[16px] font-bold text-white mt-4 mb-1">
-              {trimmed.slice(4)}
-            </h3>
-          );
+          return <h3 key={i} className="text-[16px] font-bold text-white mt-4 mb-1">{trimmed.slice(4)}</h3>;
         }
         if (trimmed.startsWith('## ')) {
-          return (
-            <h2 key={i} className="text-[18px] font-bold text-white mt-5 mb-2">
-              {trimmed.slice(3)}
-            </h2>
-          );
+          return <h2 key={i} className="text-[18px] font-bold text-white mt-5 mb-2">{trimmed.slice(3)}</h2>;
         }
         if (trimmed.startsWith('# ')) {
-          return (
-            <h1 key={i} className="text-[20px] font-extrabold text-white mt-5 mb-2">
-              {trimmed.slice(2)}
-            </h1>
-          );
+          return <h1 key={i} className="text-[20px] font-extrabold text-white mt-5 mb-2">{trimmed.slice(2)}</h1>;
         }
 
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
@@ -104,9 +79,7 @@ function RenderOutput({ text }: { text: string }) {
         }
 
         if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
-          return (
-            <p key={i} className="font-bold text-white/95">{trimmed.slice(2, -2)}</p>
-          );
+          return <p key={i} className="font-bold text-white/95">{trimmed.slice(2, -2)}</p>;
         }
 
         if (trimmed === '---' || trimmed === '***') {
@@ -119,50 +92,24 @@ function RenderOutput({ text }: { text: string }) {
   );
 }
 
-/* ── Dify SSE event types ── */
-interface DifyNodeChunk {
-  event: string;
-  task_id?: string;
-  workflow_run_id?: string;
-  data?: {
-    id?: string;
-    node_id?: string;
-    node_type?: string;
-    title?: string;
-    outputs?: Record<string, unknown>;
-    elapsed_time?: number;
-    status?: string;
-    error?: string;
-    // Streaming text chunk
-    text?: string;
-  };
-}
-
-/* ── Main component ── */
+/* ── Main ── */
 export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVisionViewProps) {
-  const [status, setStatus] = useState<'loading' | 'streaming' | 'success' | 'error'>('loading');
-  const [output, setOutput] = useState<string>('');
-  const [nodeTitle, setNodeTitle] = useState<string>('');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [output, setOutput] = useState('');
   const [elapsed, setElapsed] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
-  const outputRef = useRef(output);
-  outputRef.current = output;
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const runVision = useCallback(async () => {
     if (!event?.slug) return;
 
     setStatus('loading');
     setOutput('');
-    setNodeTitle('');
     setErrorMsg('');
     setElapsed(0);
 
-    timerRef.current = setInterval(() => {
-      setElapsed(prev => prev + 1);
-    }, 1000);
+    timerRef.current = setInterval(() => setElapsed(p => p + 1), 1000);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -175,115 +122,14 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
         signal: controller.signal,
       });
 
-      // Non-streaming error (e.g. 400, 503)
-      const ct = response.headers.get('content-type') || '';
-      if (!ct.includes('text/event-stream')) {
-        const data = await response.json();
-        setErrorMsg(data.error || `Request failed (${response.status})`);
+      const data = await response.json();
+
+      if (response.ok && (data.success || data.output)) {
+        setOutput(data.output || JSON.stringify(data, null, 2));
+        setStatus('success');
+      } else {
+        setErrorMsg(data.error || `Error ${response.status}`);
         setStatus('error');
-        return;
-      }
-
-      // Consume SSE stream
-      setStatus('streaming');
-      const reader = response.body?.getReader();
-      if (!reader) {
-        setErrorMsg('No stream received');
-        setStatus('error');
-        return;
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (!jsonStr) continue;
-
-          let parsed: DifyNodeChunk;
-          try {
-            parsed = JSON.parse(jsonStr);
-          } catch {
-            continue;
-          }
-
-          const evt = parsed.event;
-
-          // Workflow started
-          if (evt === 'workflow_started') {
-            setNodeTitle('Initializing pipeline...');
-          }
-
-          // Node started
-          if (evt === 'node_started') {
-            const title = parsed.data?.title || 'Processing...';
-            setNodeTitle(title);
-          }
-
-          // Node finished — may have text chunk or outputs
-          if (evt === 'node_finished') {
-            const d = parsed.data;
-            if (d?.outputs) {
-              const text = extractOutputText(d.outputs);
-              if (text) {
-                setOutput(prev => {
-                  const next = prev ? prev + '\n\n' + text : text;
-                  return next;
-                });
-              }
-            }
-          }
-
-          // Streaming text chunk (from LLM nodes)
-          if (evt === 'text_chunk' || evt === 'message_end') {
-            if (parsed.data?.text) {
-              setOutput(prev => prev + parsed.data!.text!);
-            }
-            if (evt === 'message_end' && parsed.data?.outputs) {
-              const finalText = extractOutputText(parsed.data.outputs);
-              if (finalText) setOutput(finalText);
-            }
-          }
-
-          // Workflow finished
-          if (evt === 'workflow_finished') {
-            const d = parsed.data;
-            if (d?.outputs) {
-              // If we already accumulated streaming text, keep it.
-              // Only overwrite if the final output is longer/complete.
-              const finalText = extractOutputText(d.outputs);
-              if (finalText && finalText.length > outputRef.current.length) {
-                setOutput(finalText);
-              }
-            }
-            setStatus('success');
-          }
-
-          // Error from Dify
-          if (evt === 'error') {
-            const errMsg = parsed.data
-              ? (typeof parsed.data === 'string' ? parsed.data : parsed.data.error || 'Pipeline error')
-              : 'Pipeline error';
-            setErrorMsg(errMsg);
-            setStatus('error');
-          }
-        }
-      }
-
-      // If stream ended without workflow_finished event
-      if (status !== 'success' && status !== 'error') {
-        if (outputRef.current) {
-          setStatus('success');
-        }
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
@@ -293,31 +139,19 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
     } finally {
       if (timerRef.current) clearInterval(timerRef.current);
     }
-  }, [event?.slug, status]);
+  }, [event?.slug]);
 
   useEffect(() => {
-    if (isOpen && event?.slug) {
-      runVision();
-    }
+    if (isOpen && event?.slug) runVision();
     return () => {
       abortRef.current?.abort();
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isOpen, event?.slug, runVision]);
 
-  // Auto-scroll during streaming
-  useEffect(() => {
-    if (status === 'streaming' && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [output, status]);
-
-  // Keyboard
   useEffect(() => {
     if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
@@ -360,7 +194,7 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
               <span className="text-[12px] font-bold text-[#73FFE4]">Phantom Vision</span>
             </div>
 
-            {(status === 'loading' || status === 'streaming') && (
+            {status === 'loading' && (
               <span className="text-[11px] text-white/30 font-mono tabular-nums">
                 {formatTime(elapsed)}
               </span>
@@ -378,13 +212,11 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
             </h1>
           </div>
 
-          {/* Divider */}
           <div className="mx-5 h-px bg-white/[0.06] mb-4" />
 
-          {/* Content area */}
-          <div ref={scrollRef} className="relative z-10 flex-1 overflow-y-auto px-5 pb-28">
+          {/* Content */}
+          <div className="relative z-10 flex-1 overflow-y-auto px-5 pb-28">
             <AnimatePresence mode="wait">
-              {/* Initial loading — ghost + skeleton */}
               {status === 'loading' && (
                 <motion.div
                   key="loading"
@@ -396,50 +228,14 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
                   <div className="w-full max-w-[260px] mb-6">
                     <Ghost3D />
                   </div>
-
-                  <p className="text-[13px] font-medium text-white/60 mb-1">
-                    Analyzing market data...
-                  </p>
+                  <p className="text-[13px] font-medium text-white/60 mb-1">Analyzing market data...</p>
                   <p className="text-[11px] text-white/30 mb-6">
                     Phantom Vision is processing the event through the AI pipeline
                   </p>
-
-                  <div className="w-full">
-                    <VisionSkeleton />
-                  </div>
+                  <div className="w-full"><VisionSkeleton /></div>
                 </motion.div>
               )}
 
-              {/* Streaming — progressive text with cursor */}
-              {status === 'streaming' && (
-                <motion.div
-                  key="streaming"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  {/* Node status bar */}
-                  {nodeTitle && (
-                    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/[0.06]">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#73FFE4] animate-pulse" />
-                      <span className="text-[11px] font-medium text-white/40">{nodeTitle}</span>
-                    </div>
-                  )}
-
-                  {output ? (
-                    <RenderOutput text={output} />
-                  ) : (
-                    <div className="flex flex-col items-center py-8">
-                      <VisionSkeleton />
-                    </div>
-                  )}
-
-                  {/* Blinking cursor */}
-                  <span className="inline-block w-2 h-4 bg-[#73FFE4]/70 animate-pulse rounded-sm ml-0.5 -mb-1" />
-                </motion.div>
-              )}
-
-              {/* Success */}
               {status === 'success' && (
                 <motion.div
                   key="success"
@@ -453,16 +249,12 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
                       <Eye className="w-3.5 h-3.5 text-[#73FFE4]" />
                     </div>
                     <span className="text-[12px] font-bold text-[#73FFE4]">Analysis Complete</span>
-                    <span className="text-[10px] text-white/25 ml-auto">
-                      {formatTime(elapsed)}
-                    </span>
+                    <span className="text-[10px] text-white/25 ml-auto">{formatTime(elapsed)}</span>
                   </div>
-
                   <RenderOutput text={output} />
                 </motion.div>
               )}
 
-              {/* Error */}
               {status === 'error' && (
                 <motion.div
                   key="error"
@@ -474,12 +266,8 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
                   <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
                     <AlertCircle className="w-7 h-7 text-red-400" />
                   </div>
-                  <p className="text-[15px] font-bold text-white/80 mb-2">
-                    Analysis Failed
-                  </p>
-                  <p className="text-[13px] text-white/40 mb-6 max-w-xs break-words">
-                    {errorMsg}
-                  </p>
+                  <p className="text-[15px] font-bold text-white/80 mb-2">Analysis Failed</p>
+                  <p className="text-[13px] text-white/40 mb-6 max-w-xs break-words">{errorMsg}</p>
                   <button
                     onClick={runVision}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl glass-card text-white/70 hover:text-white text-[13px] font-medium transition-colors"
@@ -492,7 +280,7 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
             </AnimatePresence>
           </div>
 
-          {/* Bottom bar — sticky */}
+          {/* Bottom bar */}
           <div className="fixed bottom-0 left-0 right-0 z-20 px-5 py-4 border-t border-white/[0.04] bg-phantom-dark/80 backdrop-blur-xl">
             <button
               onClick={onClose}
