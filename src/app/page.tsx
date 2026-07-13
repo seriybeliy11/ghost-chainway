@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from 'next-themes';
-import { RefreshCw, Sun, Moon, Search } from 'lucide-react';
+import { RefreshCw, Sun, Moon, Search, Info, TrendingUp } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Tooltip,
@@ -16,6 +16,12 @@ import ProfileMenu from '@/components/phantom/ProfileMenu';
 import Onboarding from '@/components/phantom/Onboarding';
 import GhostIcon from '@/components/phantom/GhostIcon';
 import BottomNavigation, { type TabId } from '@/components/phantom/BottomNavigation';
+import EventCarousel from '@/components/phantom/EventCarousel';
+import EventCard from '@/components/phantom/EventCard';
+import type { PolymarketEvent } from '@/components/phantom/EventCard';
+import SkeletonCard from '@/components/phantom/SkeletonCard';
+import EventModal from '@/components/phantom/EventModal';
+import PhantomVisionView from '@/components/phantom/PhantomVisionView';
 import TradingOverview from '@/components/phantom/TradingOverview';
 import TradersList from '@/components/phantom/TradersList';
 import TraderDetailModal from '@/components/phantom/TraderDetailModal';
@@ -39,6 +45,10 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [selectedTraderId, setSelectedTraderId] = useState<string | null>(null);
+  const [events, setEvents] = useState<PolymarketEvent[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
+  const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -168,6 +178,35 @@ export default function Home() {
     initTelegram();
   }, []);
 
+  // ── Fetch Events ──
+  const fetchEventsRef = useRef<(showSkeleton?: boolean) => Promise<void>>();
+
+  const fetchEvents = useCallback(async (showSkeleton = true) => {
+    if (showSkeleton) setIsLoadingEvents(true);
+    try {
+      const res = await fetch('/api/polymarket');
+      const data = await res.json();
+      if (data.events?.length > 0) setEvents(data.events);
+    } catch { /* keep existing */ }
+    finally { setTimeout(() => setIsLoadingEvents(false), 400); }
+  }, []);
+
+  fetchEventsRef.current = fetchEvents;
+
+  useEffect(() => { fetchEventsRef.current?.(true); }, []);
+
+  const featuredEvents = events.slice(0, 4);
+  const otherEvents = events.slice(4);
+
+  const handleRefresh = useCallback(() => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    Promise.all([
+      fetchEventsRef.current?.(false),
+      new Promise(r => setTimeout(r, 800)),
+    ]).finally(() => { setRefreshKey(k => k + 1); setIsRefreshing(false); });
+  }, [isRefreshing]);
+
   // ── Pull-to-refresh ──
   const pullStartY = useRef(0);
   const pullDistance = useRef(0);
@@ -192,15 +231,11 @@ export default function Home() {
 
   const handleTouchEnd = useCallback(() => {
     if (pullDistance.current > 50 && !isRefreshing) {
-      setIsRefreshing(true);
-      setTimeout(() => {
-        setRefreshKey(k => k + 1);
-        setIsRefreshing(false);
-      }, 1000);
+      handleRefresh();
     }
     pullDistance.current = 0;
     isPulling.current = false;
-  }, [isRefreshing]);
+  }, [isRefreshing, handleRefresh]);
 
   const toggleTheme = useCallback(() => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -300,6 +335,76 @@ export default function Home() {
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   >
+                    {/* Events carousel */}
+                    {isLoadingEvents ? (
+                      <div className="px-5 pt-4 space-y-5">
+                        <div className="space-y-3">
+                          <div className={`h-5 w-36 rounded-lg skeleton-shimmer ${isDark ? 'bg-white/5' : 'bg-gray-200'}`} />
+                          <div className="flex gap-3 overflow-hidden">
+                            <div className={`flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer ${isDark ? 'bg-white/[0.03] border border-white/[0.05]' : 'bg-gray-100 border border-gray-200'}`} />
+                            <div className={`flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer ${isDark ? 'bg-white/[0.03] border border-white/[0.05]' : 'bg-gray-100 border border-gray-200'}`} />
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className={`h-5 w-40 rounded-lg skeleton-shimmer ${isDark ? 'bg-white/5' : 'bg-gray-200'}`} />
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <SkeletonCard key={i} index={i} isDark={isDark} />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="px-5 pt-4">
+                        {/* Featured carousel */}
+                        {featuredEvents.length > 0 && (
+                          <div className="section-fade-in" style={{ animationDelay: '0.05s' }}>
+                            <EventCarousel
+                              events={featuredEvents}
+                              onEventClick={setSelectedEvent}
+                              isDark={isDark}
+                            />
+                          </div>
+                        )}
+
+                        {/* Other events */}
+                        {otherEvents.length > 0 && (
+                          <section className="mb-6 section-fade-in" style={{ animationDelay: '0.15s' }}>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className={`w-4 h-4 ${isDark ? 'text-phantom-primary-light' : 'text-teal-600'}`} />
+                                <h2 className={`text-[16px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>More Markets</h2>
+                              </div>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isDark ? 'hover:bg-white/10 text-white/30' : 'hover:bg-gray-100 text-gray-400'}`}>
+                                    <Info className="w-3.5 h-3.5" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className={`max-w-[220px] text-[13px] ${isDark ? 'bg-[#0F1E33] text-gray-200 border-white/10' : 'bg-white text-gray-700 border-gray-200'}`}>
+                                  Other active markets sorted by 24h volume ✅
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <div className="space-y-3">
+                              {otherEvents.map((event, index) => (
+                                <div key={event.id} className="card-2d-enter" style={{ animationDelay: `${index * 60}ms` }}>
+                                  <EventCard event={event} index={index} onClick={() => setSelectedEvent(event)} isDark={isDark} />
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+                        )}
+
+                        {/* End indicator */}
+                        {events.length > 0 && (
+                          <div className="flex flex-col items-center gap-1.5 pt-3 pb-4">
+                            <GhostIcon className={`${isDark ? 'text-phantom-primary/20' : 'text-gray-400/40'}`} size={16} />
+                            <p className={`text-[13px] ${isDark ? 'text-white/30' : 'text-gray-400/60'}`}>You&apos;re all caught up ✅</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Trading overview — below events */}
                     <TradingOverview key={refreshKey} isDark={isDark} />
                   </motion.div>
                 )}
@@ -372,11 +477,23 @@ export default function Home() {
 
         {/* Overlays */}
         <ProfileMenu user={user} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isDark={isDark} />
+        <EventModal
+          event={selectedEvent}
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onPhantomVision={selectedEvent ? () => setVisionEvent(selectedEvent) : undefined}
+          isDark={isDark}
+        />
         <TraderDetailModal
           traderId={selectedTraderId}
           isOpen={!!selectedTraderId}
           onClose={() => setSelectedTraderId(null)}
           isDark={isDark}
+        />
+        <PhantomVisionView
+          event={visionEvent}
+          isOpen={!!visionEvent}
+          onClose={() => setVisionEvent(null)}
         />
 
         {/* Onboarding */}
