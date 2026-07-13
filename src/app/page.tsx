@@ -74,10 +74,10 @@ export default function Home() {
         // Initialize viewport
         if (viewport) {
           viewport.expand();
-          tmaViewportHeight = viewport.height;
+          tmaViewportHeight = viewport.height as unknown as number;
 
           const onViewportChanged = () => {
-            const h = viewport.height;
+            const h = viewport.height as unknown as number;
             tmaViewportHeight = h;
             setViewportHeight(h);
             // Apply dynamic height to CSS variable
