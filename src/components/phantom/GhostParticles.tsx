@@ -17,14 +17,18 @@ interface Particle {
   brightness: number;
 }
 
-export default function GhostParticles() {
+interface GhostParticlesProps {
+  isDark?: boolean;
+}
+
+export default function GhostParticles({ isDark = true }: GhostParticlesProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animRef = useRef<number>(0);
   const frameCountRef = useRef(0);
 
   const createParticle = useCallback((width: number, height: number): Particle => {
-    const colors = [185, 195, 175];
+    const colors = isDark ? [165, 175, 160] : [210, 220, 200];
     const direction = Math.random();
     let x: number, y: number, sx: number, sy: number;
 
@@ -56,9 +60,9 @@ export default function GhostParticles() {
       hue: colors[Math.floor(Math.random() * colors.length)],
       life: 0,
       maxLife: Math.random() * 400 + 250,
-      brightness: Math.random() * 0.25 + 0.6,
+      brightness: isDark ? Math.random() * 0.25 + 0.6 : Math.random() * 0.15 + 0.35,
     };
-  }, []);
+  }, [isDark]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -74,7 +78,7 @@ export default function GhostParticles() {
     window.addEventListener('resize', resize);
 
     particlesRef.current = [];
-    const count = 14;
+    const count = isDark ? 14 : 8;
 
     for (let i = 0; i < count; i++) {
       const p = createParticle(canvas.width, canvas.height);
@@ -93,9 +97,9 @@ export default function GhostParticles() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const particles = particlesRef.current;
-      const sat = 85;
-      const lightBase = 70;
-      const coreLightness = 85;
+      const sat = isDark ? 85 : 70;
+      const lightBase = isDark ? 70 : 60;
+      const coreLightness = isDark ? 85 : 75;
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
@@ -123,7 +127,7 @@ export default function GhostParticles() {
         }
 
         // Simplified glow: 2-stop gradient instead of 4
-        const glowRadius = p.size * 5;
+        const glowRadius = p.size * (isDark ? 5 : 4);
         const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowRadius);
         gradient.addColorStop(0, `hsla(${p.hue}, ${sat}%, ${lightBase}%, ${opacity * 0.4})`);
         gradient.addColorStop(1, `hsla(${p.hue}, ${sat}%, ${lightBase}%, 0)`);
@@ -148,13 +152,13 @@ export default function GhostParticles() {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animRef.current);
     };
-  }, [createParticle]);
+  }, [createParticle, isDark]);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-[1]"
-      style={{ opacity: 0.8 }}
+      style={{ opacity: isDark ? 0.8 : 0.4 }}
     />
   );
 }

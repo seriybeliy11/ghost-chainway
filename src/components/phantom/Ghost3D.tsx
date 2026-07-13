@@ -95,8 +95,8 @@ function GhostBody() {
       <mesh geometry={ghostGeometry} material={materialRef}>
         <meshStandardMaterial
           ref={materialRef}
-          color="#39AECF"
-          emissive="#216477"
+          color="#73FFE4"
+          emissive="#40BFA8"
           emissiveIntensity={0.3}
           transparent
           opacity={0.68}
@@ -110,8 +110,8 @@ function GhostBody() {
       <mesh position={[0, 0.3, 0]}>
         <sphereGeometry args={[0.45, 12, 12]} />
         <meshStandardMaterial
-          color="#39AECF"
-          emissive="#1D7373"
+          color="#73FFE4"
+          emissive="#30BFA3"
           emissiveIntensity={0.5}
           transparent
           opacity={0.25}
@@ -124,8 +124,8 @@ function GhostBody() {
         <mesh>
           <sphereGeometry args={[0.09, 12, 12]} />
           <meshStandardMaterial
-            color="#0A1628"
-            emissive="#39AECF"
+            color="#0a0a1f"
+            emissive="#73FFE4"
             emissiveIntensity={0.4}
             roughness={0.9}
           />
@@ -133,8 +133,8 @@ function GhostBody() {
         <mesh position={[0, 0, 0.04]}>
           <sphereGeometry args={[0.05, 8, 8]} />
           <meshStandardMaterial
-            color="#39AECF"
-            emissive="#61B7CF"
+            color="#73FFE4"
+            emissive="#a0ffeb"
             emissiveIntensity={1.5}
             transparent
             opacity={0.7}
@@ -147,8 +147,8 @@ function GhostBody() {
         <mesh>
           <sphereGeometry args={[0.09, 12, 12]} />
           <meshStandardMaterial
-            color="#0A1628"
-            emissive="#39AECF"
+            color="#0a0a1f"
+            emissive="#73FFE4"
             emissiveIntensity={0.4}
             roughness={0.9}
           />
@@ -156,8 +156,8 @@ function GhostBody() {
         <mesh position={[0, 0, 0.04]}>
           <sphereGeometry args={[0.05, 8, 8]} />
           <meshStandardMaterial
-            color="#39AECF"
-            emissive="#61B7CF"
+            color="#73FFE4"
+            emissive="#a0ffeb"
             emissiveIntensity={1.5}
             transparent
             opacity={0.7}
@@ -170,8 +170,8 @@ function GhostBody() {
         <mesh>
           <torusGeometry args={[0.18, 0.035, 6, 16, Math.PI * 0.95]} />
           <meshStandardMaterial
-            color="#0A1628"
-            emissive="#39AECF"
+            color="#0a0a1f"
+            emissive="#73FFE4"
             emissiveIntensity={0.35}
             roughness={0.7}
           />
@@ -191,11 +191,11 @@ function GhostBody() {
       {/* Cheeks */}
       <mesh position={[-0.42, 0.82, 0.45]}>
         <sphereGeometry args={[0.05, 6, 6]} />
-        <meshStandardMaterial color="#39AECF" emissive="#39AECF" emissiveIntensity={0.2} transparent opacity={0.25} />
+        <meshStandardMaterial color="#73FFE4" emissive="#73FFE4" emissiveIntensity={0.2} transparent opacity={0.25} />
       </mesh>
       <mesh position={[0.42, 0.82, 0.45]}>
         <sphereGeometry args={[0.05, 6, 6]} />
-        <meshStandardMaterial color="#39AECF" emissive="#39AECF" emissiveIntensity={0.2} transparent opacity={0.25} />
+        <meshStandardMaterial color="#73FFE4" emissive="#73FFE4" emissiveIntensity={0.2} transparent opacity={0.25} />
       </mesh>
     </group>
   );
@@ -246,7 +246,7 @@ function Particles() {
       </bufferGeometry>
       <pointsMaterial
         size={0.035}
-        color="#39AECF"
+        color="#73FFE4"
         transparent
         opacity={0.45}
         sizeAttenuation
@@ -264,9 +264,9 @@ export default function Ghost3D() {
         dpr={[1, 1.5]}
         style={{ background: 'transparent' }}
       >
-        <ambientLight intensity={0.3} color="#39AECF" />
+        <ambientLight intensity={0.3} color="#73FFE4" />
         <directionalLight position={[2, 3, 4]} intensity={0.35} color="#ffffff" />
-        <pointLight position={[0, 0.6, 2.2]} color="#39AECF" intensity={2} distance={6} />
+        <pointLight position={[0, 0.6, 2.2]} color="#73FFE4" intensity={2} distance={6} />
         <Float speed={0.8} rotationIntensity={0.12} floatIntensity={0.15}>
           <GhostBody />
         </Float>

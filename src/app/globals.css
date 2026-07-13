@@ -47,23 +47,23 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --color-phantom-primary: #057D9F;
-  --color-phantom-primary-bright: #39AECF;
-  --color-phantom-primary-deep: #025167;
-  --color-phantom-primary-light: #61B7CF;
-  --color-phantom-primary-mid: #216477;
-  --color-phantom-secondary-a: #0969A2;
-  --color-phantom-secondary-a-mid: #245A7A;
-  --color-phantom-secondary-a-deep: #03436A;
-  --color-phantom-secondary-a-light: #64A8D1;
-  --color-phantom-secondary-a-bright: #3D9AD1;
-  --color-phantom-secondary-b: #009999;
-  --color-phantom-secondary-b-mid: #1D7373;
-  --color-phantom-secondary-b-deep: #006363;
-  --color-phantom-secondary-b-light: #5CCCCC;
-  --color-phantom-secondary-b-bright: #33CCCC;
-  --color-phantom-dark: #0A1628;
-  --color-phantom-surface: #0F1E33;
+  --color-phantom-primary: #406CFF;
+  --color-phantom-primary-bright: #003BFF;
+  --color-phantom-primary-deep: #0027A6;
+  --color-phantom-primary-light: #7393FF;
+  --color-phantom-primary-mid: #3051BF;
+  --color-phantom-secondary-a: #6A00FF;
+  --color-phantom-secondary-a-mid: #6C30BF;
+  --color-phantom-secondary-a-deep: #4500A6;
+  --color-phantom-secondary-a-light: #AD73FF;
+  --color-phantom-secondary-a-bright: #8F40FF;
+  --color-phantom-secondary-b: #00FFCD;
+  --color-phantom-secondary-b-mid: #30BFA3;
+  --color-phantom-secondary-b-deep: #00A685;
+  --color-phantom-secondary-b-light: #73FFE4;
+  --color-phantom-secondary-b-bright: #40FFDA;
+  --color-phantom-dark: #070714;
+  --color-phantom-surface: #0D0D24;
   --color-phantom-card: rgba(255, 255, 255, 0.04);
   --color-phantom-border: rgba(255, 255, 255, 0.08);
   --color-phantom-text: rgba(255, 255, 255, 0.9);
@@ -72,37 +72,37 @@
 
 :root {
   --radius: 0.75rem;
-  --background: #0A1628;
+  --background: #070714;
   --foreground: rgba(255, 255, 255, 0.9);
   --card: rgba(255, 255, 255, 0.04);
   --card-foreground: rgba(255, 255, 255, 0.9);
-  --popover: #0F1E33;
+  --popover: #0D0D24;
   --popover-foreground: rgba(255, 255, 255, 0.9);
-  --primary: #057D9F;
+  --primary: #406CFF;
   --primary-foreground: #FFFFFF;
   --secondary: rgba(255, 255, 255, 0.06);
   --secondary-foreground: rgba(255, 255, 255, 0.9);
   --muted: rgba(255, 255, 255, 0.06);
   --muted-foreground: rgba(255, 255, 255, 0.5);
-  --accent: rgba(5, 125, 159, 0.15);
-  --accent-foreground: #61B7CF;
-  --destructive: #EF4444;
+  --accent: rgba(106, 0, 255, 0.15);
+  --accent-foreground: #AD73FF;
+  --destructive: #FF4757;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.08);
-  --ring: #057D9F;
-  --chart-1: #057D9F;
-  --chart-2: #0969A2;
-  --chart-3: #009999;
-  --chart-4: #33CCCC;
-  --chart-5: #61B7CF;
-  --sidebar: #0C1A2E;
+  --ring: #406CFF;
+  --chart-1: #406CFF;
+  --chart-2: #6A00FF;
+  --chart-3: #00FFCD;
+  --chart-4: #8F40FF;
+  --chart-5: #7393FF;
+  --sidebar: #0A0A1E;
   --sidebar-foreground: rgba(255, 255, 255, 0.9);
-  --sidebar-primary: #057D9F;
+  --sidebar-primary: #406CFF;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: rgba(255, 255, 255, 0.06);
   --sidebar-accent-foreground: rgba(255, 255, 255, 0.9);
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #057D9F;
+  --sidebar-ring: #406CFF;
 }
 
 @layer base {
@@ -126,12 +126,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(5, 125, 159, 0.3);
+  background: rgba(64, 108, 255, 0.3);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(5, 125, 159, 0.5);
+  background: rgba(64, 108, 255, 0.5);
 }
 
 /* Smooth scroll */
@@ -204,7 +204,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #057D9F 0%, #009999 50%, #33CCCC 100%);
+  background: linear-gradient(135deg, #406CFF 0%, #8F40FF 50%, #00FFCD 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -212,22 +212,22 @@ body {
 
 /* Glow effect */
 .glow-primary {
-  box-shadow: 0 0 20px rgba(5, 125, 159, 0.15),
-              0 0 60px rgba(5, 125, 159, 0.05);
+  box-shadow: 0 0 20px rgba(64, 108, 255, 0.15),
+              0 0 60px rgba(64, 108, 255, 0.05);
 }
 
 .glow-purple {
-  box-shadow: 0 0 20px rgba(0, 153, 153, 0.15),
-              0 0 60px rgba(0, 153, 153, 0.05);
+  box-shadow: 0 0 20px rgba(106, 0, 255, 0.15),
+              0 0 60px rgba(106, 0, 255, 0.05);
 }
 
 /* Probability bar gradient */
 .prob-bar-yes {
-  background: linear-gradient(90deg, #057D9F, #009999);
+  background: linear-gradient(90deg, #406CFF, #00FFCD);
 }
 
 .prob-bar-no {
-  background: linear-gradient(90deg, #EF4444, #006363);
+  background: linear-gradient(90deg, #FF4757, #6A00FF);
 }
 
 /* Card entrance animation */
@@ -250,11 +250,11 @@ body {
 /* Pulse glow for loading */
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(5, 125, 159, 0.1);
+    box-shadow: 0 0 20px rgba(64, 108, 255, 0.1);
   }
   50% {
-    box-shadow: 0 0 40px rgba(5, 125, 159, 0.3),
-                0 0 80px rgba(0, 153, 153, 0.1);
+    box-shadow: 0 0 40px rgba(64, 108, 255, 0.3),
+                0 0 80px rgba(106, 0, 255, 0.1);
   }
 }
 
@@ -312,62 +312,4 @@ body {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-/* Hide scrollbar utility */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Smooth 2D card transition (120Hz-friendly) */
-.card-2d-enter {
-  animation: card-2d-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  opacity: 0;
-}
-
-@keyframes card-2d-enter {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Section fade-in stagger */
-.section-fade-in {
-  animation: section-fade-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  opacity: 0;
-}
-
-@keyframes section-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Bottom nav safe area */
-.bottom-nav-spacer {
-  height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
-}
-
-/* Pull-to-refresh indicator */
-@keyframes pull-indicator {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(180deg); }
-}
-
-.pull-spin {
-  animation: pull-indicator 0.8s ease-in-out infinite;
 }

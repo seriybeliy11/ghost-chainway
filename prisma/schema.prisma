@@ -1,67 +1,32 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id                  String    @id @default(cuid())
-  telegramId          Int       @unique
-  username            String?
-  firstName           String
-  lastName            String?
-  photoUrl            String?
-  languageCode        String?
-  isAuthorized        Boolean   @default(false)
-  initDataRaw         String?
-  balance             Float     @default(0)
-  generationsUsed     Int       @default(0)
-  generationsLimit    Int       @default(10)
-  subscriptionStatus  String    @default("free") // free, premium, pro
-  subscriptionExpiry  DateTime?
-  referralCode        String?   @unique
-  referredByCode      String?   // code of the direct inviter
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  // Relations
-  payments            Payment[]
-  receivedCommissions ReferralCommission[] @relation("ReceivedBy")
-  sentCommissions     ReferralCommission[] @relation("SentBy")
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model ReferralCommission {
-  id          String   @id @default(cuid())
-  // Who receives the commission (the referrer at some level)
-  receiverId  String
-  receiver    User     @relation("ReceivedBy", fields: [receiverId], references: [id])
-  // Who triggered the commission (the buyer)
-  senderId    String
-  sender      User     @relation("SentBy", fields: [senderId], references: [id])
-  // The payment that generated this commission
-  paymentId   String
-  level       Int      // 1 = direct, 2 = second level, 3 = third level
-  percent     Float    // commission percentage (30, 10, 5)
-  amount      Float    // commission amount in USD
-  createdAt   DateTime @default(now())
-}
-
-model Payment {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  // 2328.io invoice data
-  invoiceId     String?  @unique
-  amount        Float    // e.g. 4.00
-  currency      String   @default("USD")
-  status        String   @default("pending") // pending, paid, failed, expired
-  type          String   @default("premium") // premium = $4/40 gens
-  // Commission info stored at payment time
-  orderId       String?  @unique // our internal order id
-  generationsGranted Int @default(0)
-  paidAt        DateTime?
-  createdAt     DateTime @default(now())
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

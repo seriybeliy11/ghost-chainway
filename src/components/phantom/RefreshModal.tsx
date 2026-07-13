@@ -10,9 +10,10 @@ const Ghost3D = dynamic(() => import('@/components/phantom/Ghost3D'), {
 
 interface RefreshModalProps {
   isOpen: boolean;
+  isDark?: boolean;
 }
 
-export default function RefreshModal({ isOpen }: RefreshModalProps) {
+export default function RefreshModal({ isOpen, isDark = true }: RefreshModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -22,7 +23,7 @@ export default function RefreshModal({ isOpen }: RefreshModalProps) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+          style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.6)', backdropFilter: 'blur(8px)' }}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 8 }}
@@ -32,27 +33,45 @@ export default function RefreshModal({ isOpen }: RefreshModalProps) {
             className="relative w-72 rounded-3xl overflow-hidden"
           >
             <div
-              className="relative backdrop-blur-2xl border p-6 flex flex-col items-center"
+              className="relative backdrop-blur-2xl border p-6 flex flex-col items-center transition-colors duration-300"
               style={{
-                background: 'rgba(15,30,51,0.95)',
-                borderColor: 'rgba(255,255,255,0.1)',
-                boxShadow: '0 24px 80px rgba(57,174,207,0.08)',
+                background: isDark
+                  ? 'rgba(13,13,36,0.95)'
+                  : 'rgba(255,255,255,0.92)',
+                borderColor: isDark
+                  ? 'rgba(255,255,255,0.1)'
+                  : 'rgba(0,0,0,0.08)',
+                boxShadow: isDark
+                  ? '0 24px 80px rgba(115,255,228,0.08)'
+                  : '0 24px 80px rgba(0,0,0,0.08)',
               }}
             >
               {/* Static subtle glow */}
-              <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-[#39AECF]/8 via-transparent to-[#006363]/4" />
+              <div className={`absolute inset-0 pointer-events-none transition-colors duration-300 ${
+                isDark
+                  ? 'bg-gradient-to-b from-[#73FFE4]/8 via-transparent to-[#6A00FF]/4'
+                  : 'bg-gradient-to-b from-[#73FFE4]/6 via-transparent to-[#7C3AED]/3'
+              }`} />
 
-              {/* Ghost 3D */}
-              <div className="relative z-10 w-full h-40 -mb-2 rounded-2xl overflow-hidden">
+              {/* Ghost 3D — white bg wrapper in light mode */}
+              <div
+                className={`relative z-10 w-full h-40 -mb-2 rounded-2xl overflow-hidden transition-colors duration-300 ${
+                  isDark ? '' : 'bg-white/80'
+                }`}
+              >
                 <Ghost3D />
               </div>
 
               {/* Text */}
               <div className="relative z-10 text-center">
-                <p className="text-sm font-semibold mb-1 text-white/90">
+                <p className={`text-sm font-semibold mb-1 transition-colors duration-300 ${
+                  isDark ? 'text-white/90' : 'text-gray-800'
+                }`}>
                   Refreshing markets
                 </p>
-                <p className="text-[11px] animate-pulse text-phantom-text-secondary">
+                <p className={`text-[11px] animate-pulse transition-colors duration-300 ${
+                  isDark ? 'text-phantom-text-secondary' : 'text-gray-500'
+                }`}>
                   Scanning for the hottest events...
                 </p>
               </div>
