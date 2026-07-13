@@ -20,15 +20,15 @@ export default function GhostIcon({ className = '', size = 24 }: GhostIconProps)
         opacity="0.9"
       />
       {/* Left eye */}
-      <circle cx="35" cy="45" r="8" fill="#070714" />
+      <circle cx="35" cy="45" r="8" fill="#0A1628" />
       <circle cx="33" cy="43" r="3" fill="white" opacity="0.8" />
       {/* Right eye */}
-      <circle cx="65" cy="45" r="8" fill="#070714" />
+      <circle cx="65" cy="45" r="8" fill="#0A1628" />
       <circle cx="63" cy="43" r="3" fill="white" opacity="0.8" />
       {/* Laughing mouth */}
       <path
         d="M35 62Q50 80 65 62"
-        stroke="#070714"
+        stroke="#0A1628"
         strokeWidth="4"
         strokeLinecap="round"
         fill="none"
@@ -36,12 +36,12 @@ export default function GhostIcon({ className = '', size = 24 }: GhostIconProps)
       {/* Tongue */}
       <path
         d="M45 68Q50 78 55 68"
-        fill="#8F40FF"
+        fill="#33CCCC"
         opacity="0.6"
       />
       {/* Cheeks */}
-      <circle cx="24" cy="58" r="5" fill="#8F40FF" opacity="0.25" />
-      <circle cx="76" cy="58" r="5" fill="#8F40FF" opacity="0.25" />
+      <circle cx="24" cy="58" r="5" fill="#33CCCC" opacity="0.25" />
+      <circle cx="76" cy="58" r="5" fill="#33CCCC" opacity="0.25" />
     </svg>
   );
 }

@@ -451,3 +451,86 @@ Stage Summary:
 - Webhook is asynchronous — does not return pipeline result
 - User needs to enable "Return workflow result" in Dify webhook trigger node settings to get sync results
 - Code updated to correctly call webhook with url as query param
+
+---
+Task ID: db-api-setup
+Agent: full-stack-developer
+Task: Setup Neon PostgreSQL database, Prisma schema, and API routes
+
+Work Log:
+- Updated .env with Neon PostgreSQL connection string
+- Rewrote prisma/schema.prisma for PostgreSQL with User model
+- Ran db push to sync schema
+- Updated db.ts to remove noisy query logging
+- Created /api/user/route.ts (GET/POST for user auth data)
+- Rewrote /api/leaderboard/route.ts with rich trader data, trades, and P&L chart points
+
+Stage Summary:
+- Neon PostgreSQL connected and schema synced
+- User model: telegramId, subscription, balance, generations
+- Leaderboard API returns trader trades and plChart data
+
+---
+Task ID: color-palette-update
+Agent: full-stack-developer
+Task: Update entire color palette from blue/purple to teal/cyan
+
+Work Log:
+- Updated globals.css @theme inline block: all 16 phantom color variables to teal/cyan palette
+- Updated globals.css :root: background, popover, primary, accent, ring, chart colors, sidebar colors
+- Updated globals.css: gradient-text, glow-primary, glow-purple, scrollbar, prob-bar-yes/no, pulse-glow animations
+- Updated layout.tsx themeColor from #070714 to #0A1628
+- Updated EventCard.tsx: darkBgGradients to teal/navy, lightBgGradients to teal/cyan, hover shadow, noColor bar, No% text
+- Updated EventModal.tsx: Phantom Vision button gradient, Trade button gradient, modal bg, glow orbs, No% text/bar, End Date stat
+- Updated ProfileHeader.tsx: Premium badge gradient to teal
+- Updated ProfileMenu.tsx: bg color to #0F1E33, light theme avatar gradient to teal/cyan
+- Updated EventCarousel.tsx: dark bg gradient, light bg gradient, hover shadow, No% text, no-probability bar
+- Updated BottomNavigation.tsx: nav bg from #070714 to #0A1628
+- Updated SkeletonCard.tsx: light gradients to teal/cyan tones
+- Updated GhostIcon.tsx: eye/mouth fill from #070714 to #0A1628, tongue/cheeks from #8F40FF to #33CCCC
+- Updated GhostParticles.tsx: particle hue values to 175-195 (teal/cyan range)
+- Updated Ghost3D.tsx: all material/light colors from #73FFE4 to #39AECF, emissives to teal, dark fills to #0A1628
+- Updated Onboarding.tsx: all #73FFE4 to #39AECF, button gradients, step indicators, background gradients, category badges
+- Updated PhantomVisionView.tsx: all accent colors to #39AECF, back button gradient
+- Updated RefreshModal.tsx: bg to rgba(15,30,51), glow gradient to teal
+- Updated page.tsx: ambient glow light theme colors to teal/cyan
+
+Stage Summary:
+- New primary: #057D9F (teal)
+- New secondary-a: #0969A2 (blue-teal)
+- New secondary-b: #009999 (cyan)
+- Background: #0A1628 (dark navy)
+- All #73FFE4 references → #39AECF
+- All button gradients updated to teal palette
+- Zero old color hex codes remain in src/
+
+---
+Task ID: profile-view
+Agent: full-stack-developer
+Task: Create ProfileView component with subscription, balance, generations
+
+Work Log:
+- Created ProfileView.tsx with 3 info cards
+- Subscription: plan status, progress bar, upgrade CTA
+- Balance: large number display, add funds button
+- Generations: circular SVG progress, daily reset info
+- All with (?) tooltips and human-friendly copy
+
+Stage Summary:
+- Clean profile view with only subscription, balance, and generations
+- No settings section as requested
+
+---
+Task ID: trading-components
+Agent: full-stack-developer
+Task: Create TradingOverview, TradersList, TraderDetailModal components
+
+Work Log:
+- Created TradingOverview.tsx with summary stats and mini P&L charts
+- Created TradersList.tsx with full trader cards and staggered animations
+- Created TraderDetailModal.tsx with detailed trades, full P&L chart, and modal animations
+
+Stage Summary:
+- Home tab: 3 summary stat cards + top 3 traders with mini SVG charts
+- Traders tab: full list of 5 traders with glass cards
+- Modal: full P&L line chart (animated SVG), scrollable trade history

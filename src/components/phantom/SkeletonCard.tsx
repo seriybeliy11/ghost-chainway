@@ -15,10 +15,10 @@ const darkBgGradients = [
 ];
 
 const lightBgGradients = [
-  'from-blue-100/50 via-indigo-50/30 to-white',
-  'from-purple-100/50 via-blue-50/30 to-white',
-  'from-emerald-100/50 via-cyan-50/30 to-white',
-  'from-amber-100/50 via-orange-50/30 to-white',
+  'from-teal-100/50 via-cyan-50/30 to-white',
+  'from-cyan-100/50 via-sky-50/30 to-white',
+  'from-emerald-100/50 via-teal-50/30 to-white',
+  'from-sky-100/50 via-cyan-50/30 to-white',
 ];
 
 export default function SkeletonCard({ index, isDark = true }: SkeletonCardProps) {

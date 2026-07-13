@@ -28,7 +28,7 @@ export default function GhostParticles({ isDark = true }: GhostParticlesProps) {
   const frameCountRef = useRef(0);
 
   const createParticle = useCallback((width: number, height: number): Particle => {
-    const colors = isDark ? [165, 175, 160] : [210, 220, 200];
+    const colors = isDark ? [185, 195, 175] : [185, 195, 175];
     const direction = Math.random();
     let x: number, y: number, sx: number, sy: number;
 

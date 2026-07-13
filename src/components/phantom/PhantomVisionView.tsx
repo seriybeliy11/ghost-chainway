@@ -62,7 +62,7 @@ function RenderOutput({ text }: { text: string }) {
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
           return (
             <div key={i} className="flex gap-2 ml-1">
-              <span className="text-[#73FFE4] mt-0.5 shrink-0">•</span>
+              <span className="text-[#39AECF] mt-0.5 shrink-0">•</span>
               <span>{trimmed.slice(2)}</span>
             </div>
           );
@@ -72,7 +72,7 @@ function RenderOutput({ text }: { text: string }) {
           const numEnd = trimmed.indexOf('.');
           return (
             <div key={i} className="flex gap-2 ml-1">
-              <span className="text-[#73FFE4] font-bold shrink-0">{trimmed.slice(0, numEnd + 1)}</span>
+              <span className="text-[#39AECF] font-bold shrink-0">{trimmed.slice(0, numEnd + 1)}</span>
               <span>{trimmed.slice(numEnd + 1).trim()}</span>
             </div>
           );
@@ -175,7 +175,7 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
         >
           {/* Ambient glows */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute -top-24 -left-24 w-56 h-56 rounded-full blur-[100px] bg-[#73FFE4]/8" />
+            <div className="absolute -top-24 -left-24 w-56 h-56 rounded-full blur-[100px] bg-[#39AECF]/8" />
             <div className="absolute top-1/3 -right-24 w-48 h-48 rounded-full blur-[100px] bg-phantom-secondary-a/6" />
           </div>
 
@@ -190,8 +190,8 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
             </button>
 
             <div className="flex items-center gap-1.5">
-              <Eye className="w-3.5 h-3.5 text-[#73FFE4]" />
-              <span className="text-[12px] font-bold text-[#73FFE4]">Phantom Vision</span>
+              <Eye className="w-3.5 h-3.5 text-[#39AECF]" />
+              <span className="text-[12px] font-bold text-[#39AECF]">Phantom Vision</span>
             </div>
 
             {status === 'loading' && (
@@ -245,10 +245,10 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/[0.06]">
-                    <div className="w-6 h-6 rounded-full bg-[#73FFE4]/15 flex items-center justify-center">
-                      <Eye className="w-3.5 h-3.5 text-[#73FFE4]" />
+                    <div className="w-6 h-6 rounded-full bg-[#39AECF]/15 flex items-center justify-center">
+                      <Eye className="w-3.5 h-3.5 text-[#39AECF]" />
                     </div>
-                    <span className="text-[12px] font-bold text-[#73FFE4]">Analysis Complete</span>
+                    <span className="text-[12px] font-bold text-[#39AECF]">Analysis Complete</span>
                     <span className="text-[10px] text-white/25 ml-auto">{formatTime(elapsed)}</span>
                   </div>
                   <RenderOutput text={output} />
@@ -286,8 +286,8 @@ export default function PhantomVisionView({ event, isOpen, onClose }: PhantomVis
               onClick={onClose}
               className="w-full py-3.5 rounded-2xl text-white font-semibold text-[14px] flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
               style={{
-                background: 'linear-gradient(135deg, #406CFF, #6A00FF)',
-                boxShadow: '0 8px 32px rgba(64,108,255,0.25)',
+                background: 'linear-gradient(135deg, #057D9F, #03436A)',
+                boxShadow: '0 8px 32px rgba(5,125,159,0.25)',
               }}
             >
               <ArrowLeft className="w-4 h-4" />

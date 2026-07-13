@@ -65,7 +65,7 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
   const stats = [
     { label: '24h Volume', value: formatVolume(volume24h), icon: Activity, color: isDark ? 'text-emerald-400' : 'text-emerald-600' },
     { label: 'Total Volume', value: formatVolume(totalVolume), icon: BarChart3, color: isDark ? 'text-blue-400' : 'text-blue-600' },
-    { label: 'End Date', value: event ? formatDate(event.endDate) : '', icon: Clock, color: isDark ? 'text-purple-400' : 'text-purple-600' },
+    { label: 'End Date', value: event ? formatDate(event.endDate) : '', icon: Clock, color: isDark ? 'text-teal-400' : 'text-teal-600' },
     { label: 'Days Left', value: daysLeft !== null ? `${daysLeft} days` : 'TBD', icon: Flame, color: isDark ? 'text-amber-400' : 'text-amber-600' },
   ];
 
@@ -103,16 +103,16 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
               {/* Glass container — no animated background orbs */}
               <div className={`relative flex-1 flex flex-col backdrop-blur-2xl border transition-colors duration-300 ${
                 isDark
-                  ? 'bg-[#0D0D24]/95 border-white/[0.1] shadow-[0_24px_80px_rgba(0,0,0,0.6)]'
+                  ? 'bg-[#0F1E33]/95 border-white/[0.1] shadow-[0_24px_80px_rgba(0,0,0,0.6)]'
                   : 'bg-white/90 border-gray-200 shadow-[0_24px_80px_rgba(0,0,0,0.15)]'
               }`}>
                 {/* Static subtle glow */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                   <div className={`absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl ${
-                    isDark ? 'bg-blue-500/8' : 'bg-blue-200/30'
+                    isDark ? 'bg-phantom-primary/8' : 'bg-teal-200/30'
                   }`} />
                   <div className={`absolute -bottom-12 -left-12 w-32 h-32 rounded-full blur-3xl ${
-                    isDark ? 'bg-purple-500/6' : 'bg-purple-200/20'
+                    isDark ? 'bg-phantom-secondary-b/6' : 'bg-cyan-200/20'
                   }`} />
                 </div>
 
@@ -164,7 +164,7 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                           <div className={`w-px h-10 transition-colors duration-300 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
                         </div>
                         <div className="text-center flex-1">
-                          <p className={`text-3xl font-extrabold transition-colors duration-300 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                          <p className={`text-3xl font-extrabold transition-colors duration-300 ${isDark ? 'text-teal-400' : 'text-teal-600'}`}>
                             {noPrice.toFixed(0)}%
                           </p>
                           <p className={`text-[11px] font-medium mt-0.5 transition-colors duration-300 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'}`}>
@@ -185,7 +185,7 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                           initial={{ width: 0 }}
                           animate={{ width: `${noPrice}%` }}
                           transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                          className="h-full rounded-r-full bg-gradient-to-r from-purple-400 to-indigo-500"
+                          className="h-full rounded-r-full bg-gradient-to-r from-teal-400 to-cyan-500"
                         />
                       </div>
                     </div>
@@ -241,10 +241,10 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                         onClick={() => { onClose(); onPhantomVision(); }}
                         className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2.5 transition-transform active:scale-[0.98] relative overflow-hidden"
                         style={{
-                          background: 'linear-gradient(135deg, #00A685, #73FFE4, #00A685)',
+                          background: 'linear-gradient(135deg, #025167, #39AECF, #025167)',
                           boxShadow: isDark
-                            ? '0 8px 32px rgba(115,255,228,0.2)'
-                            : '0 8px 32px rgba(52,211,153,0.2)',
+                            ? '0 8px 32px rgba(57,174,207,0.2)'
+                            : '0 8px 32px rgba(5,125,159,0.2)',
                         }}
                       >
                         <Eye className="w-4 h-4" />
@@ -252,21 +252,24 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                         <Sparkles className="w-3.5 h-3.5" />
                       </button>
                     )}
-                    {/* Trade on Polymarket */}
-                    <button
-                      className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
+                    {/* Trade on Polymarket — with referral link */}
+                    <a
+                      href={event.slug ? `https://polymarket.com/event/${event.slug}?ref=phantom` : 'https://polymarket.com/?ref=phantom'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] no-underline"
                       style={{
                         background: isDark
-                          ? 'linear-gradient(135deg, #406CFF, #6A00FF)'
-                          : 'linear-gradient(135deg, #3B82F6, #7C3AED)',
+                          ? 'linear-gradient(135deg, #057D9F, #03436A)'
+                          : 'linear-gradient(135deg, #0969A2, #006363)',
                         boxShadow: isDark
-                          ? '0 8px 32px rgba(64,108,255,0.25)'
-                          : '0 8px 32px rgba(59,130,246,0.2)',
+                          ? '0 8px 32px rgba(5,125,159,0.25)'
+                          : '0 8px 32px rgba(9,105,162,0.2)',
                       }}
                     >
                       <ExternalLink className="w-4 h-4" />
                       Trade on Polymarket
-                    </button>
+                    </a>
                   </div>
                 </div>
               </div>

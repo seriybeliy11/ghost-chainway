@@ -111,8 +111,8 @@ export default function ProfileHeader({ user, isLoading, onMenuOpen, isDark = tr
           transition-all duration-300 backdrop-blur-md border
           ${isPremium
             ? (isDark
-              ? 'bg-gradient-to-r from-purple-500/15 to-blue-500/15 border-purple-500/25 text-purple-300'
-              : 'bg-gradient-to-r from-purple-100 to-blue-100 border-purple-200 text-purple-700')
+              ? 'bg-gradient-to-r from-phantom-primary/15 to-phantom-secondary-b/15 border-phantom-primary/25 text-phantom-primary-light'
+              : 'bg-gradient-to-r from-teal-100 to-cyan-100 border-teal-200 text-teal-700')
             : (isDark
               ? 'bg-white/5 border-white/10 text-phantom-text-secondary'
               : 'bg-gray-100 border-gray-200 text-gray-600')

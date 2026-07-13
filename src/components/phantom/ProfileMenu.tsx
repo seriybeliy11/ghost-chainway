@@ -50,7 +50,7 @@ export default function ProfileMenu({ user, isOpen, onClose, isDark = true }: Pr
           >
             <div className={`backdrop-blur-2xl border shadow-xl transition-colors duration-300 ${
               isDark
-                ? 'bg-[#0D0D24]/95 border-white/[0.1] shadow-[0_8px_40px_rgba(0,0,0,0.5)]'
+                ? 'bg-[#0F1E33]/95 border-white/[0.1] shadow-[0_8px_40px_rgba(0,0,0,0.5)]'
                 : 'bg-white/95 border-gray-200 shadow-[0_8px_40px_rgba(0,0,0,0.1)]'
             }`}>
               {/* User row */}
@@ -60,7 +60,7 @@ export default function ProfileMenu({ user, isOpen, onClose, isDark = true }: Pr
                 <div className={`w-10 h-10 rounded-full p-[1.5px] flex-shrink-0 transition-colors duration-300 ${
                   isDark
                     ? 'bg-gradient-to-br from-phantom-primary via-phantom-secondary-a to-phantom-secondary-b'
-                    : 'bg-gradient-to-br from-blue-400 via-purple-400 to-emerald-400'
+                    : 'bg-gradient-to-br from-teal-400 via-cyan-400 to-teal-500'
                 }`}>
                   <div className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden transition-colors duration-300 ${
                     isDark ? 'bg-phantom-dark' : 'bg-white'

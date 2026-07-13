@@ -25,17 +25,17 @@ interface EventCardProps {
 }
 
 const darkBgGradients = [
-  'from-[#1a0a3e]/90 via-[#0d1a4a]/85 to-[#070714]',
-  'from-[#0a1a3e]/90 via-[#1a0a3e]/85 to-[#070714]',
-  'from-[#0a2a2a]/90 via-[#0d1a3e]/85 to-[#070714]',
-  'from-[#1a1a0a]/90 via-[#0a1a2a]/85 to-[#070714]',
+  'from-[#0a2035]/90 via-[#0d1a33]/85 to-[#0A1628]',
+  'from-[#091a2e]/90 via-[#0a2035]/85 to-[#0A1628]',
+  'from-[#0a2528]/90 via-[#0d1a33]/85 to-[#0A1628]',
+  'from-[#0d1e2e]/90 via-[#0a1a30]/85 to-[#0A1628]',
 ];
 
 const lightBgGradients = [
-  'from-blue-50/95 via-indigo-50/90 to-white',
-  'from-purple-50/95 via-blue-50/90 to-white',
-  'from-emerald-50/95 via-cyan-50/90 to-white',
-  'from-amber-50/95 via-orange-50/90 to-white',
+  'from-teal-50/95 via-cyan-50/90 to-white',
+  'from-cyan-50/95 via-sky-50/90 to-white',
+  'from-emerald-50/95 via-teal-50/90 to-white',
+  'from-sky-50/95 via-cyan-50/90 to-white',
 ];
 
 export default function EventCard({ event, index, onClick, isDark = true }: EventCardProps) {
@@ -99,7 +99,7 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
       ? (isDark ? 'from-blue-400 to-cyan-400' : 'from-blue-500 to-cyan-600')
       : (isDark ? 'from-orange-400 to-red-400' : 'from-orange-500 to-red-500');
 
-  const noColor = isDark ? 'from-purple-400 to-indigo-500' : 'from-purple-500 to-indigo-600';
+  const noColor = isDark ? 'from-teal-400 to-cyan-500' : 'from-teal-500 to-cyan-600';
 
   return (
     <motion.div
@@ -114,7 +114,7 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
       onClick={onClick}
       className={`relative rounded-2xl overflow-hidden cursor-pointer active:scale-[0.98] transition-shadow duration-300 h-[190px] ${
         isDark
-          ? 'border border-white/[0.08] hover:border-white/[0.15] hover:shadow-[0_8px_32px_rgba(115,255,228,0.1)]'
+          ? 'border border-white/[0.08] hover:border-white/[0.15] hover:shadow-[0_8px_32px_rgba(57,174,207,0.1)]'
           : 'border border-gray-200/80 hover:border-gray-300 shadow-sm hover:shadow-lg'
       }`}
     >
@@ -125,7 +125,7 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
           isDark ? 'bg-phantom-primary/15' : 'bg-blue-300/25'
         }`} />
         <div className={`absolute -bottom-10 -right-10 w-28 h-28 rounded-full blur-2xl ${
-          isDark ? 'bg-phantom-secondary-a/10' : 'bg-purple-300/20'
+          isDark ? 'bg-phantom-secondary-a/10' : 'bg-cyan-300/20'
         }`} />
         {/* Glass overlay */}
         <div className={`absolute inset-0 transition-colors duration-300 ${
@@ -185,7 +185,7 @@ export default function EventCard({ event, index, onClick, isDark = true }: Even
             </div>
             <div className="text-right">
               <span className={`text-[22px] font-extrabold leading-none transition-colors duration-300 ${
-                isDark ? 'text-purple-400' : 'text-purple-600'
+                isDark ? 'text-teal-400' : 'text-teal-600'
               }`}>
                 {noPrice.toFixed(0)}<span className="text-[13px] font-bold">%</span>
               </span>

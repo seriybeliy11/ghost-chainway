@@ -36,21 +36,21 @@ export default function RefreshModal({ isOpen, isDark = true }: RefreshModalProp
               className="relative backdrop-blur-2xl border p-6 flex flex-col items-center transition-colors duration-300"
               style={{
                 background: isDark
-                  ? 'rgba(13,13,36,0.95)'
+                  ? 'rgba(15,30,51,0.95)'
                   : 'rgba(255,255,255,0.92)',
                 borderColor: isDark
                   ? 'rgba(255,255,255,0.1)'
                   : 'rgba(0,0,0,0.08)',
                 boxShadow: isDark
-                  ? '0 24px 80px rgba(115,255,228,0.08)'
+                  ? '0 24px 80px rgba(57,174,207,0.08)'
                   : '0 24px 80px rgba(0,0,0,0.08)',
               }}
             >
               {/* Static subtle glow */}
               <div className={`absolute inset-0 pointer-events-none transition-colors duration-300 ${
                 isDark
-                  ? 'bg-gradient-to-b from-[#73FFE4]/8 via-transparent to-[#6A00FF]/4'
-                  : 'bg-gradient-to-b from-[#73FFE4]/6 via-transparent to-[#7C3AED]/3'
+                  ? 'bg-gradient-to-b from-[#39AECF]/8 via-transparent to-[#006363]/4'
+                  : 'bg-gradient-to-b from-[#39AECF]/6 via-transparent to-[#006363]/3'
               }`} />
 
               {/* Ghost 3D — white bg wrapper in light mode */}
