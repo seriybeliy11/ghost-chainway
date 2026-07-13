@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from 'next-themes';
-import { RefreshCw, Sun, Moon, Search, Info, TrendingUp } from 'lucide-react';
+import { RefreshCw, Search, Info, TrendingUp, X, Sun, Moon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Tooltip,
@@ -11,7 +11,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import ProfileHeader from '@/components/phantom/ProfileHeader';
 import ProfileMenu from '@/components/phantom/ProfileMenu';
 import Onboarding from '@/components/phantom/Onboarding';
 import GhostIcon from '@/components/phantom/GhostIcon';
@@ -43,6 +42,7 @@ let tmaViewportHeight: number | null = null;
 export default function Home() {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [selectedTraderId, setSelectedTraderId] = useState<string | null>(null);
   const [events, setEvents] = useState<PolymarketEvent[]>([]);
@@ -195,8 +195,14 @@ export default function Home() {
 
   useEffect(() => { fetchEventsRef.current?.(true); }, []);
 
-  const featuredEvents = events.slice(0, 4);
-  const otherEvents = events.slice(4);
+  const filteredEvents = searchQuery.trim()
+    ? events.filter(e =>
+        e.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : events;
+  const featuredEvents = filteredEvents.slice(0, 4);
+  const otherEvents = filteredEvents.slice(4);
 
   const handleRefresh = useCallback(() => {
     if (isRefreshing) return;
@@ -268,46 +274,70 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 overflow-hidden">
-          {/* Header — glassmorphism, always visible */}
-          <header
-            className={`shrink-0 px-5 pt-4 pb-3 backdrop-blur-2xl border-b transition-all duration-300 ${
+          {/* Search bar — replaces header */}
+          <div
+            className={`shrink-0 px-4 pt-4 pb-3 backdrop-blur-2xl border-b transition-all duration-300 ${
               isDark
                 ? 'border-white/[0.06] bg-[#0A1628]/80'
                 : 'border-gray-200/80 bg-white/80'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <ProfileHeader
-                user={user}
-                isLoading={!user}
-                onMenuOpen={() => setIsMenuOpen(true)}
-                isDark={isDark}
-              />
-              <div className="flex items-center gap-2">
-                {mounted && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={toggleTheme}
-                        className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 active:scale-90 ${
-                          isDark ? 'glass-card' : 'glass-card-light'
-                        }`}
-                        aria-label="Toggle theme"
-                      >
-                        {isDark
-                          ? <Sun className="w-4 h-4 text-amber-400" />
-                          : <Moon className="w-4 h-4 text-teal-600" />
-                        }
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className={`text-[13px] ${isDark ? 'bg-[#0F1E33] text-gray-200 border-white/10' : 'bg-white text-gray-700 border-gray-200'}`}>
-                      Switch between light and dark themes ✨
-                    </TooltipContent>
-                  </Tooltip>
+            <div className="flex items-center gap-2.5">
+              <div className={`relative flex-1 flex items-center rounded-2xl transition-all duration-200 ${
+                isDark
+                  ? 'bg-white/[0.06] border border-white/[0.08] focus-within:border-phantom-primary/40'
+                  : 'bg-gray-100 border border-gray-200 focus-within:border-teal-400/50'
+              }`}>
+                <Search className={`w-4 h-4 ml-3.5 shrink-0 transition-colors duration-200 ${
+                  searchQuery
+                    ? (isDark ? 'text-phantom-primary' : 'text-teal-600')
+                    : (isDark ? 'text-white/25' : 'text-gray-400')
+                }`} />
+                <input
+                  type="text"
+                  placeholder="Search markets..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className={`flex-1 bg-transparent py-2.5 pl-2.5 pr-3 text-[14px] placeholder:font-normal outline-none transition-colors duration-200 ${
+                    isDark
+                      ? 'text-white placeholder:text-white/25'
+                      : 'text-gray-900 placeholder:text-gray-400'
+                  }`}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className={`mr-2 shrink-0 p-0.5 rounded-full transition-colors ${
+                      isDark ? 'hover:bg-white/10 text-white/30' : 'hover:bg-gray-200 text-gray-400'
+                    }`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 )}
               </div>
+              {mounted && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={toggleTheme}
+                      className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 active:scale-90 shrink-0 ${
+                        isDark ? 'glass-card' : 'glass-card-light'
+                      }`}
+                      aria-label="Toggle theme"
+                    >
+                      {isDark
+                        ? <Sun className="w-4 h-4 text-amber-400" />
+                        : <Moon className="w-4 h-4 text-teal-600" />
+                      }
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className={`text-[13px] ${isDark ? 'bg-[#0F1E33] text-gray-200 border-white/10' : 'bg-white text-gray-700 border-gray-200'}`}>
+                    Switch between light and dark themes ✨
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
-          </header>
+          </div>
 
           {/* Pull-to-refresh indicator */}
           {isRefreshing && (
@@ -449,7 +479,7 @@ export default function Home() {
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <ProfileView isDark={isDark} />
+                    <ProfileView user={user} isDark={isDark} />
                   </motion.div>
                 )}
               </AnimatePresence>
