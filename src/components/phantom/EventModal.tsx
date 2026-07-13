@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useCallback } from 'react';
-import { X, Clock, Flame, BarChart3, ExternalLink, Activity, Eye, Sparkles } from 'lucide-react';
+import { X, Clock, Flame, BarChart3, ExternalLink, Activity } from 'lucide-react';
 
 interface EventModalProps {
   event: {
@@ -19,10 +19,9 @@ interface EventModalProps {
   } | null;
   isOpen: boolean;
   onClose: () => void;
-  onPhantomVision?: () => void;
 }
 
-export default function EventModal({ event, isOpen, onClose, onPhantomVision }: EventModalProps) {
+export default function EventModal({ event, isOpen, onClose }: EventModalProps) {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
   }, [onClose]);
@@ -206,24 +205,8 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision }: 
                     </div>
                   )}
 
-                  {/* CTA buttons */}
-                  <div className="px-5 pb-5 space-y-2.5">
-                    {/* Phantom Vision */}
-                    {onPhantomVision && (
-                      <button
-                        onClick={() => { onClose(); onPhantomVision(); }}
-                        className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2.5 transition-transform active:scale-[0.98] relative overflow-hidden"
-                        style={{
-                          background: 'linear-gradient(135deg, #025167, #39AECF, #025167)',
-                          boxShadow: '0 8px 32px rgba(57,174,207,0.2)',
-                        }}
-                      >
-                        <Eye className="w-4 h-4" />
-                        Phantom Vision
-                        <Sparkles className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                    {/* Trade on Polymarket — with referral link */}
+                  {/* Trade on Polymarket */}
+                  <div className="px-5 pb-5">
                     <a
                       href={event.slug ? `https://polymarket.com/event/${event.slug}?ref=phantom` : 'https://polymarket.com/?ref=phantom'}
                       target="_blank"

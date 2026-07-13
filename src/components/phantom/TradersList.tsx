@@ -150,11 +150,7 @@ function SkeletonList() {
 }
 
 /* ── Main Component ── */
-export default function TradersList({
-  onTraderClick,
-}: {
-  onTraderClick: (traderId: string) => void;
-}) {
+export default function TradersList() {
   const [traders, setTraders] = useState<Trader[]>([]);
   const [trendingMarkets, setTrendingMarkets] = useState<TrendingMarket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,10 +223,9 @@ export default function TradersList({
         {/* Trader list */}
         <div className="space-y-2.5">
           {traders.map((trader, index) => (
-            <button
+            <div
               key={trader.id}
-              onClick={() => onTraderClick(trader.id)}
-              className={`${cardClass} rounded-2xl px-4 py-3.5 w-full text-left transition-transform duration-200 active:scale-[0.98] hover:brightness-105 card-2d-enter`}
+              className={`${cardClass} rounded-2xl px-4 py-3.5 w-full card-2d-enter`}
               style={{ animationDelay: `${index * 60}ms` }}
             >
               <div className="flex items-center gap-3">
@@ -296,7 +291,7 @@ export default function TradersList({
                   </span>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </div>
