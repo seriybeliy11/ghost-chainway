@@ -534,3 +534,27 @@ Stage Summary:
 - Home tab: 3 summary stat cards + top 3 traders with mini SVG charts
 - Traders tab: full list of 5 traders with glass cards
 - Modal: full P&L line chart (animated SVG), scrollable trade history
+---
+Task ID: final-integration
+Agent: Main Agent
+Task: Complete integration - Neon DB, trading UI, TMA best practices, new color palette
+
+Work Log:
+- Verified Neon DB connected (PostgreSQL, User model synced)
+- Verified /api/user and /api/leaderboard API routes working
+- Updated BottomNavigation tabs: Overview, Traders, Feed, Profile
+- Completely rewrote page.tsx: removed all events/EventCard/EventModal/PhantomVision imports
+- Integrated TMA SDK: viewportChanged for dynamic height, themeParams for CSS variables
+- Added pull-to-refresh touch handler
+- Added AnimatePresence tab transitions with 120Hz-friendly easing
+- Glassmorphism header with backdrop-blur
+- Agent Browser verified: Overview (3 stat cards + top 3 traders with SVG charts), Traders (5 traders list), TraderDetailModal (P&L chart + 27 trades + CTA), Profile (Subscription + Balance + Generations, no settings)
+
+Stage Summary:
+- Neon PostgreSQL: User model with telegramId, subscription, balance, generations
+- Color palette: teal/cyan (#057D9F primary, #009999 secondary-b)
+- Home = Trading Overview with mini P&L charts
+- Traders = separate tab with click-to-detail modal
+- Profile = only subscription, balance, generations (no settings)
+- TMA SDK: viewport, themeParams, no 100vh, safe-area-inset
+- Pull-to-refresh, bottom nav, glassmorphism, 15px+ text

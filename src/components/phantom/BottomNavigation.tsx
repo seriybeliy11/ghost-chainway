@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Search, BarChart3, User, Info } from 'lucide-react';
+import { Home, Users, BarChart3, UserCircle, Info } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export type TabId = 'home' | 'explore' | 'activity' | 'profile';
+export type TabId = 'overview' | 'traders' | 'activity' | 'profile';
 
 interface BottomNavigationProps {
   activeTab: TabId;
@@ -17,10 +17,10 @@ interface BottomNavigationProps {
 }
 
 const tabs: { id: TabId; icon: typeof Home; label: string; tooltip: string }[] = [
-  { id: 'home', icon: Home, label: 'Home', tooltip: 'Main feed with featured markets, events, and leaderboard' },
-  { id: 'explore', icon: Search, label: 'Explore', tooltip: 'Search and discover all available prediction markets' },
-  { id: 'activity', icon: BarChart3, label: 'Activity', tooltip: 'Your recent trades, alerts, and market movements' },
-  { id: 'profile', icon: User, label: 'Profile', tooltip: 'Your account settings, stats, and subscription' },
+  { id: 'overview', icon: BarChart3, label: 'Overview', tooltip: 'Trading overview with top leader stats and charts' },
+  { id: 'traders', icon: Users, label: 'Traders', tooltip: 'Full list of top traders — tap to see their trade history' },
+  { id: 'activity', icon: Home, label: 'Feed', tooltip: 'Your recent trades and market movements' },
+  { id: 'profile', icon: UserCircle, label: 'Profile', tooltip: 'My subscription, balance, and AI generations' },
 ];
 
 export default function BottomNavigation({ activeTab, onTabChange, isDark = true }: BottomNavigationProps) {
@@ -46,7 +46,7 @@ export default function BottomNavigation({ activeTab, onTabChange, isDark = true
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => onTabChange(tab.id)}
-                    className={`flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-200 relative ${
+                    className={`flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-200 relative active:scale-90 ${
                       isActive
                         ? (isDark ? 'text-phantom-primary' : 'text-gray-900')
                         : (isDark ? 'text-white/30 hover:text-white/50' : 'text-gray-400 hover:text-gray-600')
@@ -65,7 +65,7 @@ export default function BottomNavigation({ activeTab, onTabChange, isDark = true
                     </span>
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className={`text-xs ${isDark ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-700 border-gray-200'}`}>
+                <TooltipContent side="top" className={`text-xs ${isDark ? 'bg-[#0F1E33] text-gray-200 border-white/10' : 'bg-white text-gray-700 border-gray-200'}`}>
                   {tab.tooltip}
                 </TooltipContent>
               </Tooltip>
