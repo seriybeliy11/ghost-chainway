@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useCallback } from 'react';
-import { X, TrendingUp, Clock, Flame, BarChart3, ExternalLink, Activity, Eye, Sparkles } from 'lucide-react';
+import { X, Clock, Flame, BarChart3, ExternalLink, Activity, Eye, Sparkles } from 'lucide-react';
 
 interface EventModalProps {
   event: {
@@ -20,10 +20,9 @@ interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPhantomVision?: () => void;
-  isDark?: boolean;
 }
 
-export default function EventModal({ event, isOpen, onClose, onPhantomVision, isDark = true }: EventModalProps) {
+export default function EventModal({ event, isOpen, onClose, onPhantomVision }: EventModalProps) {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
   }, [onClose]);
@@ -63,10 +62,10 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
   const daysLeft = event ? getDaysLeft(event.endDate) : null;
 
   const stats = [
-    { label: '24h Volume', value: formatVolume(volume24h), icon: Activity, color: isDark ? 'text-emerald-400' : 'text-emerald-600' },
-    { label: 'Total Volume', value: formatVolume(totalVolume), icon: BarChart3, color: isDark ? 'text-blue-400' : 'text-blue-600' },
-    { label: 'End Date', value: event ? formatDate(event.endDate) : '', icon: Clock, color: isDark ? 'text-teal-400' : 'text-teal-600' },
-    { label: 'Days Left', value: daysLeft !== null ? `${daysLeft} days` : 'TBD', icon: Flame, color: isDark ? 'text-amber-400' : 'text-amber-600' },
+    { label: '24h Volume', value: formatVolume(volume24h), icon: Activity, color: 'text-emerald-400' },
+    { label: 'Total Volume', value: formatVolume(totalVolume), icon: BarChart3, color: 'text-blue-400' },
+    { label: 'End Date', value: event ? formatDate(event.endDate) : '', icon: Clock, color: 'text-teal-400' },
+    { label: 'Days Left', value: daysLeft !== null ? `${daysLeft} days` : 'TBD', icon: Flame, color: 'text-amber-400' },
   ];
 
   const yesColor = yesPrice > 65
@@ -87,7 +86,7 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
             transition={{ duration: 0.25 }}
             className="fixed inset-0 z-50"
             onClick={onClose}
-            style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.25)' }}
+            style={{ backgroundColor: 'rgba(0,0,0,0.65)' }}
           />
 
           {/* Modal */}
@@ -101,80 +100,62 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
               onClick={(e) => e.stopPropagation()}
             >
               {/* Glass container — no animated background orbs */}
-              <div className={`relative flex-1 flex flex-col backdrop-blur-2xl border transition-colors duration-300 ${
-                isDark
-                  ? 'bg-[#0F1E33]/95 border-white/[0.1] shadow-[0_24px_80px_rgba(0,0,0,0.6)]'
-                  : 'bg-white/90 border-gray-200 shadow-[0_24px_80px_rgba(0,0,0,0.15)]'
-              }`}>
+              <div className="relative flex-1 flex flex-col backdrop-blur-2xl border transition-colors duration-300 bg-[#0F1E33]/95 border-white/[0.1] shadow-[0_24px_80px_rgba(0,0,0,0.6)]">
                 {/* Static subtle glow */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  <div className={`absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl ${
-                    isDark ? 'bg-phantom-primary/8' : 'bg-teal-200/30'
-                  }`} />
-                  <div className={`absolute -bottom-12 -left-12 w-32 h-32 rounded-full blur-3xl ${
-                    isDark ? 'bg-phantom-secondary-b/6' : 'bg-cyan-200/20'
-                  }`} />
+                  <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl bg-phantom-primary/8" />
+                  <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full blur-3xl bg-phantom-secondary-b/6" />
                 </div>
 
                 {/* Content */}
                 <div className="relative z-10 flex-1 overflow-y-auto">
                   {/* Header */}
                   <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm border transition-colors duration-300 ${
-                      isDark ? 'bg-white/[0.06] border-white/[0.08] text-white/60' : 'bg-gray-100 border-gray-200 text-gray-600'
-                    }`}>
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm border transition-colors duration-300 bg-white/[0.06] border-white/[0.08] text-white/60">
                       {event.category || 'Market'}
                     </span>
                     <button
                       onClick={onClose}
-                      className={`w-8 h-8 rounded-full backdrop-blur-sm border flex items-center justify-center transition-colors duration-300 active:scale-90 ${
-                        isDark ? 'bg-white/5 border-white/[0.08] hover:bg-white/10' : 'bg-gray-100 border-gray-200 hover:bg-gray-200'
-                      }`}
+                      className="w-8 h-8 rounded-full backdrop-blur-sm border flex items-center justify-center transition-colors duration-300 active:scale-90 bg-white/5 border-white/[0.08] hover:bg-white/10"
                     >
-                      <X className={`w-3.5 h-3.5 transition-colors duration-300 ${isDark ? 'text-white/60' : 'text-gray-500'}`} />
+                      <X className="w-3.5 h-3.5 transition-colors duration-300 text-white/60" />
                     </button>
                   </div>
 
                   {/* Question */}
-                  <h2 className={`text-[17px] font-bold leading-snug px-5 mb-5 transition-colors duration-300 ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>
+                  <h2 className="text-[17px] font-bold leading-snug px-5 mb-5 transition-colors duration-300 text-white">
                     {event.question}
                   </h2>
 
                   {/* Probability */}
                   <div className="px-5 mb-5">
-                    <div className={`rounded-2xl p-4 border transition-colors duration-300 ${
-                      isDark ? 'glass-card' : 'glass-card-light'
-                    }`}>
+                    <div className="rounded-2xl p-4 border transition-colors duration-300 glass-card">
                       <div className="flex justify-between mb-3">
                         <div className="text-center flex-1">
                           <p className={`text-3xl font-extrabold transition-colors duration-300 ${
-                            yesPrice > 65 ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
-                              : yesPrice > 40 ? (isDark ? 'text-blue-400' : 'text-blue-600')
-                              : (isDark ? 'text-orange-400' : 'text-orange-600')
+                            yesPrice > 65 ? 'text-emerald-400'
+                              : yesPrice > 40 ? 'text-blue-400'
+                              : 'text-orange-400'
                           }`}>
                             {yesPrice.toFixed(0)}%
                           </p>
-                          <p className={`text-[11px] font-medium mt-0.5 transition-colors duration-300 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'}`}>
+                          <p className="text-[11px] font-medium mt-0.5 transition-colors duration-300 text-phantom-text-secondary">
                             {event.outcomes?.[0] || 'Yes'}
                           </p>
                         </div>
                         <div className="flex items-center">
-                          <div className={`w-px h-10 transition-colors duration-300 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                          <div className="w-px h-10 transition-colors duration-300 bg-white/10" />
                         </div>
                         <div className="text-center flex-1">
-                          <p className={`text-3xl font-extrabold transition-colors duration-300 ${isDark ? 'text-teal-400' : 'text-teal-600'}`}>
+                          <p className="text-3xl font-extrabold transition-colors duration-300 text-teal-400">
                             {noPrice.toFixed(0)}%
                           </p>
-                          <p className={`text-[11px] font-medium mt-0.5 transition-colors duration-300 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'}`}>
+                          <p className="text-[11px] font-medium mt-0.5 transition-colors duration-300 text-phantom-text-secondary">
                             {event.outcomes?.[1] || 'No'}
                           </p>
                         </div>
                       </div>
-                      <div className={`h-2.5 rounded-full overflow-hidden flex transition-colors duration-300 ${
-                        isDark ? 'bg-white/5' : 'bg-gray-100'
-                      }`}>
+                      <div className="h-2.5 rounded-full overflow-hidden flex transition-colors duration-300 bg-white/5">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${yesPrice}%` }}
@@ -196,17 +177,15 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                     {stats.map((stat) => (
                       <div
                         key={stat.label}
-                        className={`rounded-xl p-3 border transition-colors duration-300 ${
-                          isDark ? 'glass-card' : 'glass-card-light'
-                        }`}
+                        className="rounded-xl p-3 border transition-colors duration-300 glass-card"
                       >
                         <div className="flex items-center gap-1.5 mb-1">
                           <stat.icon className={`w-3 h-3 ${stat.color}`} />
-                          <span className={`text-[9px] font-medium uppercase tracking-wider transition-colors duration-300 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'}`}>
+                          <span className="text-[9px] font-medium uppercase tracking-wider transition-colors duration-300 text-phantom-text-secondary">
                             {stat.label}
                           </span>
                         </div>
-                        <p className={`text-sm font-bold transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>
+                        <p className="text-sm font-bold transition-colors duration-300 text-white">{stat.value}</p>
                       </div>
                     ))}
                   </div>
@@ -216,18 +195,12 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                     <div
                       className="mx-5 mb-5 flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-colors duration-300"
                       style={{
-                        background: isDark
-                          ? (isVeryHot ? 'rgba(239,68,68,0.1)' : 'rgba(249,115,22,0.1)')
-                          : (isVeryHot ? 'rgba(239,68,68,0.05)' : 'rgba(249,115,22,0.05)'),
-                        borderColor: isDark
-                          ? (isVeryHot ? 'rgba(239,68,68,0.15)' : 'rgba(249,115,22,0.15)')
-                          : (isVeryHot ? 'rgba(239,68,68,0.1)' : 'rgba(249,115,22,0.1)')
+                        background: isVeryHot ? 'rgba(239,68,68,0.1)' : 'rgba(249,115,22,0.1)',
+                        borderColor: isVeryHot ? 'rgba(239,68,68,0.15)' : 'rgba(249,115,22,0.15)',
                       }}
                     >
                       <Flame className={`w-3.5 h-3.5 ${isVeryHot ? 'text-red-400' : 'text-orange-400'}`} />
-                      <span className={`text-[11px] font-medium transition-colors duration-300 ${
-                        isDark ? 'text-white/50' : 'text-gray-500'
-                      }`}>
+                      <span className="text-[11px] font-medium transition-colors duration-300 text-white/50">
                         {isVeryHot ? 'Blazing — Extremely high trading activity' : 'Trending — High trading activity'}
                       </span>
                     </div>
@@ -242,9 +215,7 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                         className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2.5 transition-transform active:scale-[0.98] relative overflow-hidden"
                         style={{
                           background: 'linear-gradient(135deg, #025167, #39AECF, #025167)',
-                          boxShadow: isDark
-                            ? '0 8px 32px rgba(57,174,207,0.2)'
-                            : '0 8px 32px rgba(5,125,159,0.2)',
+                          boxShadow: '0 8px 32px rgba(57,174,207,0.2)',
                         }}
                       >
                         <Eye className="w-4 h-4" />
@@ -259,12 +230,8 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                       rel="noopener noreferrer"
                       className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] no-underline"
                       style={{
-                        background: isDark
-                          ? 'linear-gradient(135deg, #057D9F, #03436A)'
-                          : 'linear-gradient(135deg, #0969A2, #006363)',
-                        boxShadow: isDark
-                          ? '0 8px 32px rgba(5,125,159,0.25)'
-                          : '0 8px 32px rgba(9,105,162,0.2)',
+                        background: 'linear-gradient(135deg, #057D9F, #03436A)',
+                        boxShadow: '0 8px 32px rgba(5,125,159,0.25)',
                       }}
                     >
                       <ExternalLink className="w-4 h-4" />

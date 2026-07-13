@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Send, Copy, Check, Users, Gift, Zap, Crown, ChevronRight, Loader2 } from 'lucide-react';
+import { ShieldCheck, Send, Copy, Check, Gift, Zap, Crown, Loader2 } from 'lucide-react';
 import GhostIcon from '@/components/phantom/GhostIcon';
 
 interface TelegramUser {
@@ -30,7 +30,6 @@ interface DbUser {
 
 interface ProfileViewProps {
   user: TelegramUser | null;
-  isDark?: boolean;
 }
 
 const cardVariants = {
@@ -48,7 +47,7 @@ const COMMISSION_TIERS = [
   { level: 3, percent: 5, label: '3rd level' },
 ];
 
-export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
+export default function ProfileView({ user }: ProfileViewProps) {
   const [dbUser, setDbUser] = useState<DbUser | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -103,10 +102,10 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
     }
   };
 
-  const cardBase = isDark ? 'glass-card' : 'glass-card-light';
-  const textPrimary = isDark ? 'text-white/90' : 'text-gray-900';
-  const textSecondary = isDark ? 'text-white/40' : 'text-gray-500';
-  const textMuted = isDark ? 'text-white/25' : 'text-gray-400';
+  const cardBase = 'glass-card';
+  const textPrimary = 'text-white/90';
+  const textSecondary = 'text-white/40';
+  const textMuted = 'text-white/25';
 
   return (
     <div className="px-4 pb-6 pt-2">
@@ -117,14 +116,8 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
             className={`${cardBase} rounded-3xl p-6`}>
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <div className={`w-[68px] h-[68px] rounded-full p-[2px] ${
-                  isDark
-                    ? 'bg-gradient-to-br from-phantom-primary via-phantom-secondary-a to-phantom-secondary-b'
-                    : 'bg-gradient-to-br from-teal-400 via-cyan-400 to-teal-500'
-                }`}>
-                  <div className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden ${
-                    isDark ? 'bg-phantom-dark' : 'bg-white'
-                  }`}>
+                <div className="w-[68px] h-[68px] rounded-full p-[2px] bg-gradient-to-br from-phantom-primary via-phantom-secondary-a to-phantom-secondary-b">
+                  <div className="w-full h-full rounded-full flex items-center justify-center overflow-hidden bg-phantom-dark">
                     {user.photo_url ? (
                       <img src={user.photo_url} alt={displayName} className="w-full h-full object-cover" />
                     ) : (
@@ -132,9 +125,7 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
                     )}
                   </div>
                 </div>
-                <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 ${
-                  isDark ? 'bg-emerald-400 border-phantom-dark' : 'bg-emerald-500 border-white'
-                }`} />
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 bg-emerald-400 border-phantom-dark" />
               </div>
               <div className="flex flex-col gap-1 min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -142,9 +133,7 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
                   <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
                 </div>
                 {user.username && <span className={`text-[14px] leading-tight ${textSecondary}`}>@{user.username}</span>}
-                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full w-fit ${
-                  isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                }`}>Authorized via Telegram</span>
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full w-fit bg-emerald-500/15 text-emerald-400">Authorized via Telegram</span>
               </div>
             </div>
           </motion.div>
@@ -153,12 +142,10 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
           <motion.div custom={1} variants={cardVariants} initial="hidden" animate="visible"
             className={`${cardBase} rounded-3xl p-5 mt-4`}>
             <div className="flex items-center gap-2 mb-4">
-              <Crown className={`w-4.5 h-4.5 ${isPremium ? 'text-amber-400' : (isDark ? 'text-white/40' : 'text-gray-400')}`} />
+              <Crown className={`w-4.5 h-4.5 ${isPremium ? 'text-amber-400' : 'text-white/40'}`} />
               <span className={`text-[15px] font-bold ${textPrimary}`}>Subscription</span>
               {isPremium && (
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  isDark ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-100 text-amber-600'
-                }`}>ACTIVE</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">ACTIVE</span>
               )}
             </div>
 
@@ -179,7 +166,7 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
                 {dbUser.balance > 0 && (
                   <div className="flex items-center justify-between">
                     <span className={`text-[13px] ${textSecondary}`}>Balance (commissions)</span>
-                    <span className={`text-[13px] font-bold text-emerald-400`}>
+                    <span className="text-[13px] font-bold text-emerald-400">
                       ${dbUser.balance.toFixed(2)}
                     </span>
                   </div>
@@ -206,27 +193,25 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
           <motion.div custom={2} variants={cardVariants} initial="hidden" animate="visible"
             className={`${cardBase} rounded-3xl p-5 mt-4`}>
             <div className="flex items-center gap-2 mb-4">
-              <Gift className={`w-4.5 h-4.5 ${isDark ? 'text-phantom-primary-light' : 'text-teal-600'}`} />
+              <Gift className="w-4.5 h-4.5 text-phantom-primary-light" />
               <span className={`text-[15px] font-bold ${textPrimary}`}>Referral Program</span>
             </div>
 
             {/* Referral code */}
-            <div className={`flex items-center gap-3 rounded-2xl p-3.5 ${
-              isDark ? 'bg-white/[0.04] border border-white/[0.07]' : 'bg-gray-50 border border-gray-200'
-            }`}>
+            <div className="flex items-center gap-3 rounded-2xl p-3.5 bg-white/[0.04] border border-white/[0.07]">
               <div className="flex-1 min-w-0">
                 <p className={`text-[11px] font-medium mb-1 ${textMuted}`}>Your referral code</p>
                 {dbUser?.referralCode ? (
                   <p className={`text-[20px] font-extrabold tracking-[0.15em] ${textPrimary}`}>{dbUser.referralCode}</p>
                 ) : (
-                  <div className={`h-6 w-32 rounded-lg skeleton-shimmer ${isDark ? 'bg-white/5' : 'bg-gray-200'}`} />
+                  <div className="h-6 w-32 rounded-lg skeleton-shimmer bg-white/5" />
                 )}
               </div>
               <button onClick={handleCopy} disabled={!dbUser?.referralCode}
                 className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-90 ${
                   copied
                     ? 'bg-emerald-500/20 text-emerald-400'
-                    : (isDark ? 'bg-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.1]' : 'bg-gray-100 text-gray-500 hover:text-gray-700')
+                    : 'bg-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.1]'
                 }`}>
                 {copied ? <Check className="w-4.5 h-4.5" /> : <Copy className="w-4.5 h-4.5" />}
               </button>
@@ -235,21 +220,19 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
             {/* Multi-level commission tiers */}
             <div className="mt-4 space-y-2">
               {COMMISSION_TIERS.map(tier => (
-                <div key={tier.level} className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 ${
-                  isDark ? 'bg-white/[0.03]' : 'bg-gray-50/80'
-                }`}>
+                <div key={tier.level} className="flex items-center justify-between rounded-xl px-3.5 py-2.5 bg-white/[0.03]">
                   <div className="flex items-center gap-2">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
                       tier.level === 1
-                        ? (isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600')
-                        : (isDark ? 'bg-white/[0.06] text-white/40' : 'bg-gray-100 text-gray-500')
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'bg-white/[0.06] text-white/40'
                     }`}>
                       {tier.level}
                     </div>
                     <span className={`text-[13px] ${textSecondary}`}>{tier.label}</span>
                   </div>
                   <span className={`text-[14px] font-bold ${
-                    tier.level === 1 ? 'text-emerald-400' : (isDark ? 'text-white/50' : 'text-gray-600')
+                    tier.level === 1 ? 'text-emerald-400' : 'text-white/50'
                   }`}>
                     {tier.percent}%
                   </span>
@@ -266,10 +249,8 @@ export default function ProfileView({ user, isDark = true }: ProfileViewProps) {
         /* ── Not authorized ── */
         <motion.div custom={0} variants={cardVariants} initial="hidden" animate="visible"
           className="flex flex-col items-center pt-10 px-4">
-          <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-5 ${
-            isDark ? 'bg-white/[0.05]' : 'bg-gray-100'
-          }`}>
-            <Send className={`w-9 h-9 ${isDark ? 'text-white/20' : 'text-gray-400'}`} />
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-white/[0.05]">
+            <Send className="w-9 h-9 text-white/20" />
           </div>
           <h3 className={`text-[18px] font-bold mb-2 ${textPrimary}`}>Not Authorized</h3>
           <p className={`text-[14px] text-center max-w-[260px] mb-6 leading-relaxed ${textSecondary}`}>

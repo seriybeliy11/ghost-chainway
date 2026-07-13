@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RefreshCw, Search, Info, TrendingUp, X } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { RefreshCw, Search, Info, TrendingUp, X, Sun, Moon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Tooltip,
@@ -47,6 +48,7 @@ export default function Home() {
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
   const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -240,9 +242,17 @@ export default function Home() {
     isPulling.current = false;
   }, [isRefreshing, handleRefresh]);
 
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  }, [theme, setTheme]);
+
+  const isDark = theme === 'dark';
+
   const handleTraderClick = useCallback((traderId: string) => {
     setSelectedTraderId(traderId);
   }, []);
+
+  const isOverview = activeTab === 'overview';
 
   // Dynamic container style for TMA viewport
   const containerStyle = viewportHeight
@@ -252,44 +262,79 @@ export default function Home() {
   return (
     <TooltipProvider delayDuration={300}>
       <main
-        className="flex flex-col transition-colors duration-500 bg-phantom-dark relative"
+        className={`flex flex-col transition-colors duration-500 ${isDark ? 'bg-phantom-dark' : 'bg-gray-50'} relative`}
         style={viewportHeight ? { height: `${viewportHeight}px` } : { minHeight: '100vh' }}
       >
         {/* Background ambient glows */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[120px] transition-colors duration-500 bg-phantom-primary/6" />
-          <div className="absolute top-1/4 -right-32 w-48 h-48 rounded-full blur-[100px] transition-colors duration-500 bg-phantom-secondary-a/5" />
-          <div className="absolute bottom-1/4 left-1/4 w-56 h-56 rounded-full blur-[140px] transition-colors duration-500 bg-phantom-secondary-b/3" />
+          <div className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[120px] transition-colors duration-500 ${isDark ? 'bg-phantom-primary/6' : 'bg-teal-200/30'}`} />
+          <div className={`absolute top-1/4 -right-32 w-48 h-48 rounded-full blur-[100px] transition-colors duration-500 ${isDark ? 'bg-phantom-secondary-a/5' : 'bg-cyan-200/25'}`} />
+          <div className={`absolute bottom-1/4 left-1/4 w-56 h-56 rounded-full blur-[140px] transition-colors duration-500 ${isDark ? 'bg-phantom-secondary-b/3' : 'bg-cyan-200/20'}`} />
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 overflow-hidden">
           {/* Search bar — replaces header */}
           <div
-            className="shrink-0 px-4 pt-4 pb-3 backdrop-blur-2xl border-b transition-all duration-300 border-white/[0.06] bg-[#0A1628]/80"
+            className={`shrink-0 px-4 pt-4 pb-3 backdrop-blur-2xl border-b transition-all duration-300 ${
+              isDark
+                ? 'border-white/[0.06] bg-[#0A1628]/80'
+                : 'border-gray-200/80 bg-white/80'
+            }`}
           >
             <div className="flex items-center gap-2.5">
-              <div className="relative flex-1 flex items-center rounded-2xl transition-all duration-200 bg-white/[0.06] border border-white/[0.08] focus-within:border-phantom-primary/40">
+              <div className={`relative flex-1 flex items-center rounded-2xl transition-all duration-200 ${
+                isDark
+                  ? 'bg-white/[0.06] border border-white/[0.08] focus-within:border-phantom-primary/40'
+                  : 'bg-gray-100 border border-gray-200 focus-within:border-teal-400/50'
+              }`}>
                 <Search className={`w-4 h-4 ml-3.5 shrink-0 transition-colors duration-200 ${
                   searchQuery
-                    ? 'text-phantom-primary'
-                    : 'text-white/25'
+                    ? (isDark ? 'text-phantom-primary' : 'text-teal-600')
+                    : (isDark ? 'text-white/25' : 'text-gray-400')
                 }`} />
                 <input
                   type="text"
                   placeholder="Search markets..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent py-2.5 pl-2.5 pr-3 text-[14px] placeholder:font-normal outline-none transition-colors duration-200 text-white placeholder:text-white/25"
+                  className={`flex-1 bg-transparent py-2.5 pl-2.5 pr-3 text-[14px] placeholder:font-normal outline-none transition-colors duration-200 ${
+                    isDark
+                      ? 'text-white placeholder:text-white/25'
+                      : 'text-gray-900 placeholder:text-gray-400'
+                  }`}
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="mr-2 shrink-0 p-0.5 rounded-full transition-colors hover:bg-white/10 text-white/30"
+                    className={`mr-2 shrink-0 p-0.5 rounded-full transition-colors ${
+                      isDark ? 'hover:bg-white/10 text-white/30' : 'hover:bg-gray-200 text-gray-400'
+                    }`}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
+              {mounted && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={toggleTheme}
+                      className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 active:scale-90 shrink-0 ${
+                        isDark ? 'glass-card' : 'glass-card-light'
+                      }`}
+                      aria-label="Toggle theme"
+                    >
+                      {isDark
+                        ? <Sun className="w-4 h-4 text-amber-400" />
+                        : <Moon className="w-4 h-4 text-teal-600" />
+                      }
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className={`text-[13px] ${isDark ? 'bg-[#0F1E33] text-gray-200 border-white/10' : 'bg-white text-gray-700 border-gray-200'}`}>
+                    Switch between light and dark themes ✨
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </div>
 
@@ -323,16 +368,16 @@ export default function Home() {
                     {isLoadingEvents ? (
                       <div className="px-5 pt-4 space-y-5">
                         <div className="space-y-3">
-                          <div className="h-5 w-36 rounded-lg skeleton-shimmer bg-white/5" />
+                          <div className={`h-5 w-36 rounded-lg skeleton-shimmer ${isDark ? 'bg-white/5' : 'bg-gray-200'}`} />
                           <div className="flex gap-3 overflow-hidden">
-                            <div className="flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer bg-white/[0.03] border border-white/[0.05]" />
-                            <div className="flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer bg-white/[0.03] border border-white/[0.05]" />
+                            <div className={`flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer ${isDark ? 'bg-white/[0.03] border border-white/[0.05]' : 'bg-gray-100 border border-gray-200'}`} />
+                            <div className={`flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer ${isDark ? 'bg-white/[0.03] border border-white/[0.05]' : 'bg-gray-100 border border-gray-200'}`} />
                           </div>
                         </div>
                         <div className="space-y-3">
-                          <div className="h-5 w-40 rounded-lg skeleton-shimmer bg-white/5" />
+                          <div className={`h-5 w-40 rounded-lg skeleton-shimmer ${isDark ? 'bg-white/5' : 'bg-gray-200'}`} />
                           {Array.from({ length: 3 }).map((_, i) => (
-                            <SkeletonCard key={i} index={i} />
+                            <SkeletonCard key={i} index={i} isDark={isDark} />
                           ))}
                         </div>
                       </div>
@@ -344,6 +389,7 @@ export default function Home() {
                             <EventCarousel
                               events={featuredEvents}
                               onEventClick={setSelectedEvent}
+                              isDark={isDark}
                             />
                           </div>
                         )}
@@ -353,16 +399,16 @@ export default function Home() {
                           <section className="mb-6 section-fade-in" style={{ animationDelay: '0.15s' }}>
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-phantom-primary-light" />
-                                <h2 className="text-[16px] font-bold text-white">More Markets</h2>
+                                <TrendingUp className={`w-4 h-4 ${isDark ? 'text-phantom-primary-light' : 'text-teal-600'}`} />
+                                <h2 className={`text-[16px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>More Markets</h2>
                               </div>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <button className="w-6 h-6 rounded-full flex items-center justify-center transition-colors hover:bg-white/10 text-white/30">
+                                  <button className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isDark ? 'hover:bg-white/10 text-white/30' : 'hover:bg-gray-100 text-gray-400'}`}>
                                     <Info className="w-3.5 h-3.5" />
                                   </button>
                                 </TooltipTrigger>
-                                <TooltipContent side="left" className="max-w-[220px] text-[13px] bg-[#0F1E33] text-gray-200 border-white/10">
+                                <TooltipContent side="left" className={`max-w-[220px] text-[13px] ${isDark ? 'bg-[#0F1E33] text-gray-200 border-white/10' : 'bg-white text-gray-700 border-gray-200'}`}>
                                   Other active markets sorted by 24h volume ✅
                                 </TooltipContent>
                               </Tooltip>
@@ -370,7 +416,7 @@ export default function Home() {
                             <div className="space-y-3">
                               {otherEvents.map((event, index) => (
                                 <div key={event.id} className="card-2d-enter" style={{ animationDelay: `${index * 60}ms` }}>
-                                  <EventCard event={event} index={index} onClick={() => setSelectedEvent(event)} />
+                                  <EventCard event={event} index={index} onClick={() => setSelectedEvent(event)} isDark={isDark} />
                                 </div>
                               ))}
                             </div>
@@ -380,8 +426,8 @@ export default function Home() {
                         {/* End indicator */}
                         {events.length > 0 && (
                           <div className="flex flex-col items-center gap-1.5 pt-3 pb-4">
-                            <GhostIcon className="text-phantom-primary/20" size={16} />
-                            <p className="text-[13px] text-white/30">You&apos;re all caught up ✅</p>
+                            <GhostIcon className={`${isDark ? 'text-phantom-primary/20' : 'text-gray-400/40'}`} size={16} />
+                            <p className={`text-[13px] ${isDark ? 'text-white/30' : 'text-gray-400/60'}`}>You&apos;re all caught up ✅</p>
                           </div>
                         )}
                       </div>
@@ -400,6 +446,7 @@ export default function Home() {
                     <TradersList
                       key={refreshKey}
                       onTraderClick={handleTraderClick}
+                      isDark={isDark}
                     />
                   </motion.div>
                 )}
@@ -412,11 +459,11 @@ export default function Home() {
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     className="flex flex-col items-center justify-center px-6 py-20"
                   >
-                    <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-4 bg-white/[0.05]">
-                      <Search className="w-7 h-7 text-white/20" />
+                    <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-4 ${isDark ? 'bg-white/[0.05]' : 'bg-gray-100'}`}>
+                      <Search className={`w-7 h-7 ${isDark ? 'text-white/20' : 'text-gray-400'}`} />
                     </div>
-                    <h3 className="text-[16px] font-bold mb-1.5 text-white">Activity Feed</h3>
-                    <p className="text-[15px] text-center max-w-[260px] text-white/35">
+                    <h3 className={`text-[16px] font-bold mb-1.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>Activity Feed</h3>
+                    <p className={`text-[15px] text-center max-w-[260px] ${isDark ? 'text-white/35' : 'text-gray-500'}`}>
                       Your recent trades and market movements will appear here soon ⏳
                     </p>
                   </motion.div>
@@ -429,7 +476,7 @@ export default function Home() {
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <ProfileView user={user} />
+                    <ProfileView user={user} isDark={isDark} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -438,33 +485,37 @@ export default function Home() {
 
           {/* Minimal footer */}
           <footer
-            className="shrink-0 px-5 py-2.5 border-t backdrop-blur-xl transition-colors duration-500 border-white/[0.04] bg-phantom-dark/70"
+            className={`shrink-0 px-5 py-2.5 border-t backdrop-blur-xl transition-colors duration-500 ${
+              isDark ? 'border-white/[0.04] bg-phantom-dark/70' : 'border-gray-200 bg-white/70'
+            }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <GhostIcon className="text-phantom-primary/30" size={12} />
-                <span className="text-[10px] font-medium text-phantom-text-secondary/30">Phantom</span>
+                <GhostIcon className={`${isDark ? 'text-phantom-primary/30' : 'text-gray-400/40'}`} size={12} />
+                <span className={`text-[10px] font-medium ${isDark ? 'text-phantom-text-secondary/30' : 'text-gray-400/50'}`}>Phantom</span>
               </div>
-              <span className="text-[10px] text-phantom-text-secondary/25">Powered by Polymarket</span>
+              <span className={`text-[10px] ${isDark ? 'text-phantom-text-secondary/25' : 'text-gray-400/40'}`}>Powered by Polymarket</span>
             </div>
           </footer>
         </div>
 
         {/* Bottom Navigation */}
-        <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} isDark={isDark} />
 
         {/* Overlays */}
-        <ProfileMenu user={user} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        <ProfileMenu user={user} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isDark={isDark} />
         <EventModal
           event={selectedEvent}
           isOpen={!!selectedEvent}
           onClose={() => setSelectedEvent(null)}
           onPhantomVision={selectedEvent ? () => setVisionEvent(selectedEvent) : undefined}
+          isDark={isDark}
         />
         <TraderDetailModal
           traderId={selectedTraderId}
           isOpen={!!selectedTraderId}
           onClose={() => setSelectedTraderId(null)}
+          isDark={isDark}
         />
         <PhantomVisionView
           event={visionEvent}

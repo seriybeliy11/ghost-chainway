@@ -46,24 +46,16 @@ interface Trader {
 }
 
 /* ── Avatar color ring per rank ── */
-function getAvatarRing(rank: number, isDark: boolean): string {
+function getAvatarRing(rank: number): string {
   switch (rank) {
     case 1:
-      return isDark
-        ? 'bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500'
-        : 'bg-gradient-to-br from-yellow-400 via-amber-500 to-yellow-600';
+      return 'bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500';
     case 2:
-      return isDark
-        ? 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500'
-        : 'bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600';
+      return 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500';
     case 3:
-      return isDark
-        ? 'bg-gradient-to-br from-amber-600 via-amber-700 to-orange-700'
-        : 'bg-gradient-to-br from-amber-600 via-amber-700 to-orange-800';
+      return 'bg-gradient-to-br from-amber-600 via-amber-700 to-orange-700';
     default:
-      return isDark
-        ? 'bg-gradient-to-br from-phantom-primary/60 to-phantom-secondary-a/60'
-        : 'bg-gradient-to-br from-teal-300 to-cyan-400';
+      return 'bg-gradient-to-br from-phantom-primary/60 to-phantom-secondary-a/60';
   }
 }
 
@@ -82,16 +74,14 @@ interface TrendingMarket {
   yesPrice: number;
 }
 
-function TrendingSummary({ markets, isDark }: { markets: TrendingMarket[]; isDark: boolean }) {
-  const pillBase = isDark
-    ? 'bg-white/[0.04] border-white/[0.07] text-white/70 hover:bg-white/[0.08] hover:border-white/[0.12]'
-    : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300';
+function TrendingSummary({ markets }: { markets: TrendingMarket[] }) {
+  const pillBase = 'bg-white/[0.04] border-white/[0.07] text-white/70 hover:bg-white/[0.08] hover:border-white/[0.12]';
 
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
-        <Zap className={`w-4 h-4 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
-        <h3 className={`text-[15px] font-bold ${isDark ? 'text-white/90' : 'text-gray-900'}`}>
+        <Zap className="w-4 h-4 text-amber-400" />
+        <h3 className="text-[15px] font-bold text-white/90">
           Most Bet On This Month
         </h3>
       </div>
@@ -106,7 +96,7 @@ function TrendingSummary({ markets, isDark }: { markets: TrendingMarket[]; isDar
             <div className="relative w-7 h-7 shrink-0">
               <svg viewBox="0 0 28 28" className="w-7 h-7 -rotate-90">
                 <circle cx="14" cy="14" r="11" fill="none" strokeWidth="3"
-                  className={isDark ? 'stroke-white/[0.06]' : 'stroke-gray-200'} />
+                  className="stroke-white/[0.06]" />
                 <circle cx="14" cy="14" r="11" fill="none" strokeWidth="3"
                   stroke={m.yesPrice > 60 ? '#34d399' : m.yesPrice > 35 ? '#22d3ee' : '#fb923c'}
                   strokeDasharray={`${2 * Math.PI * 11}`}
@@ -120,18 +110,14 @@ function TrendingSummary({ markets, isDark }: { markets: TrendingMarket[]; isDar
             </div>
 
             <div className="min-w-0 flex flex-col gap-0.5">
-              <span className={`text-[12px] font-semibold leading-tight line-clamp-1 max-w-[140px] ${
-                isDark ? 'text-white/80' : 'text-gray-800'
-              }`}>
+              <span className="text-[12px] font-semibold leading-tight line-clamp-1 max-w-[140px] text-white/80">
                 {m.question}
               </span>
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-medium ${isDark ? 'text-white/30' : 'text-gray-400'}`}>
+                <span className="text-[10px] font-medium text-white/30">
                   {m.volume}
                 </span>
-                <span className={`text-[10px] px-1.5 py-px rounded-full font-medium ${
-                  isDark ? 'bg-white/[0.05] text-white/40' : 'bg-gray-100 text-gray-500'
-                }`}>
+                <span className="text-[10px] px-1.5 py-px rounded-full font-medium bg-white/[0.05] text-white/40">
                   {m.category}
                 </span>
               </div>
@@ -144,12 +130,11 @@ function TrendingSummary({ markets, isDark }: { markets: TrendingMarket[]; isDar
 }
 
 /* ── Skeleton ── */
-function SkeletonList({ isDark }: { isDark: boolean }) {
-  const cardClass = isDark ? 'glass-card' : 'glass-card-light';
+function SkeletonList() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className={`${cardClass} rounded-2xl px-4 py-3.5`}>
+        <div key={i} className="glass-card rounded-2xl px-4 py-3.5">
           <div className="flex items-center gap-3">
             <div className="skeleton-shimmer h-12 w-12 rounded-full shrink-0" />
             <div className="flex-1">
@@ -167,10 +152,8 @@ function SkeletonList({ isDark }: { isDark: boolean }) {
 /* ── Main Component ── */
 export default function TradersList({
   onTraderClick,
-  isDark = true,
 }: {
   onTraderClick: (traderId: string) => void;
-  isDark?: boolean;
 }) {
   const [traders, setTraders] = useState<Trader[]>([]);
   const [trendingMarkets, setTrendingMarkets] = useState<TrendingMarket[]>([]);
@@ -209,32 +192,28 @@ export default function TradersList({
     fetchData();
   }, []);
 
-  if (loading) return <SkeletonList isDark={isDark} />;
+  if (loading) return <SkeletonList />;
 
-  const cardClass = isDark ? 'glass-card' : 'glass-card-light';
+  const cardClass = 'glass-card';
 
   return (
     <TooltipProvider delayDuration={300}>
       <div className="px-4 section-fade-in">
         {/* Header — aligned to container */}
         <div className="flex items-center gap-2 mb-4">
-          <h2 className={`text-[18px] font-bold ${isDark ? 'text-white/95' : 'text-gray-900'}`}>
+          <h2 className="text-[18px] font-bold text-white/95">
             All Traders
           </h2>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className={`transition-colors ${
-                  isDark ? 'text-white/30 hover:text-white/50' : 'text-gray-400 hover:text-gray-600'
-                }`}
+                className="transition-colors text-white/30 hover:text-white/50"
                 aria-label="Info about traders list"
               >
                 <Info className="w-4 h-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className={`text-[13px] ${
-              isDark ? 'bg-[#0F1E33] text-gray-200 border-white/10' : 'bg-white text-gray-700 border-gray-200'
-            }`}>
+            <TooltipContent side="top" className="text-[13px] bg-[#0F1E33] text-gray-200 border-white/10">
               Top performing traders sorted by 24h profit
             </TooltipContent>
           </Tooltip>
@@ -242,7 +221,7 @@ export default function TradersList({
 
         {/* Trending summary — what's being bet on most this month */}
         {trendingMarkets.length > 0 && (
-          <TrendingSummary markets={trendingMarkets} isDark={isDark} />
+          <TrendingSummary markets={trendingMarkets} />
         )}
 
         {/* Trader list */}
@@ -257,25 +236,19 @@ export default function TradersList({
               <div className="flex items-center gap-3">
                 {/* Circular ghost avatar with gradient ring */}
                 <div className="relative shrink-0">
-                  <div className={`w-12 h-12 rounded-full p-[2px] ${getAvatarRing(trader.rank, isDark)}`}>
-                    <div className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden ${
-                      isDark ? 'bg-[#0A1628]' : 'bg-white'
-                    }`}>
+                  <div className={`w-12 h-12 rounded-full p-[2px] ${getAvatarRing(trader.rank)}`}>
+                    <div className="w-full h-full rounded-full flex items-center justify-center overflow-hidden bg-[#0A1628]">
                       <GhostIcon
                         size={28}
                         className={trader.rank <= 3
-                          ? (isDark ? 'text-phantom-primary-light' : 'text-teal-600')
-                          : (isDark ? 'text-white/40' : 'text-gray-500')
+                          ? 'text-phantom-primary-light'
+                          : 'text-white/40'
                         }
                       />
                     </div>
                   </div>
                   {/* Rank badge */}
-                  <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold border-2 ${
-                    isDark
-                      ? 'bg-[#0A1628] border-[#0A1628] text-white/60'
-                      : 'bg-white border-white text-gray-600'
-                  }`}>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold border-2 bg-[#0A1628] border-[#0A1628] text-white/60">
                     {trader.rank}
                   </div>
                 </div>
@@ -283,31 +256,23 @@ export default function TradersList({
                 {/* Info — name + inline stats */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className={`text-[15px] font-semibold truncate ${
-                      isDark ? 'text-white/90' : 'text-gray-900'
-                    }`}>
+                    <span className="text-[15px] font-semibold truncate text-white/90">
                       {trader.displayName}
                     </span>
                     <span className="text-sm shrink-0">{trader.badge}</span>
                   </div>
 
                   {/* Inline stats in one line */}
-                  <div className={`flex items-center gap-2.5 mt-1`}>
-                    <span className={`text-[11px] flex items-center gap-1 ${
-                      isDark ? 'text-white/35' : 'text-gray-500'
-                    }`}>
+                  <div className="flex items-center gap-2.5 mt-1">
+                    <span className="text-[11px] flex items-center gap-1 text-white/35">
                       <Target className="w-3 h-3 text-phantom-primary-bright" />
                       {trader.winRate}%
                     </span>
-                    <span className={`text-[11px] flex items-center gap-1 ${
-                      isDark ? 'text-white/35' : 'text-gray-500'
-                    }`}>
+                    <span className="text-[11px] flex items-center gap-1 text-white/35">
                       <TrendingUp className="w-3 h-3 text-phantom-primary-bright" />
                       {trader.trades24h}
                     </span>
-                    <span className={`text-[11px] flex items-center gap-1 ${
-                      isDark ? 'text-white/35' : 'text-gray-500'
-                    }`}>
+                    <span className="text-[11px] flex items-center gap-1 text-white/35">
                       <Flame className="w-3 h-3 text-orange-400" />
                       {trader.streak}
                     </span>
@@ -326,9 +291,7 @@ export default function TradersList({
                       {formatProfit(trader.profit24h)}
                     </span>
                   </div>
-                  <span className={`text-[11px] ${
-                    isDark ? 'text-white/30' : 'text-gray-400'
-                  }`}>
+                  <span className="text-[11px] text-white/30">
                     {trader.profitPercent >= 0 ? '+' : ''}{trader.profitPercent.toFixed(1)}%
                   </span>
                 </div>

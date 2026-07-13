@@ -23,4 +23,24 @@ Stage Summary:
 - Traders: "All Traders" heading, "Most Bet On This Month" horizontal pills, trader cards with GhostIcon circular avatars + rank badges
 - Profile (authorized): user card + subscription card ($4/40 gens) + referral program card (8-char code, copy button, 3-tier commissions: 30%/10%/5%)
 - Profile (unauthorized): Telegram CTA
-- Backend: 2328.io invoice API, webhook with multi-level commission distribution, Prisma schema with Payment + ReferralCommission
+- Backend: 2328.io invoice API, webhook with multi-level commission distribution, Prisma schema with Payment + ReferralCommission---
+Task ID: 1
+Agent: main
+Task: Remove theme switching, keep only dark mode for TMA
+
+Work Log:
+- Killed all next processes, cleared .next, restarted server via nohup
+- Fixed hydration mismatch (isDark defaulting to true before mount)
+- Verified server stable with agent-browser
+- Removed `useTheme`/`ThemeProvider`/`next-themes` from page.tsx and layout.tsx
+- Removed Sun/Moon toggle button from search bar
+- Removed `isDark` prop from 12 component files: page.tsx, layout.tsx, BottomNavigation, EventCard, EventCarousel, EventModal, TraderDetailModal, ProfileView, TradersList, SkeletonCard, ProfileMenu, LeaderboardSection, RefreshModal, GhostParticles
+- Removed all `isDark ? dark : light` ternaries — kept only dark branches
+- Removed unused `lightBgGradients`, `lightStyles` arrays
+- Verified all 4 tabs (Overview, Traders, Feed, Profile) render correctly
+- Confirmed no hydration errors in console
+
+Stage Summary:
+- App is now dark-mode only, no theme switching
+- Zero `isDark` references in active source files (only unused ProfileHeader.tsx and TradingOverview.tsx remain)
+- Server running on port 3000, HTTP 200, all tabs functional

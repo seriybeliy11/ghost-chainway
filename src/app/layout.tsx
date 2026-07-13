@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -43,15 +42,8 @@ export default function RootLayout({
         className={`${manrope.variable} antialiased`}
         style={{ fontFamily: "'Manrope', system-ui, -apple-system, sans-serif" }}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-          disableTransitionOnChange={false}
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );

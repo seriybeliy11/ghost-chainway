@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, TrendingUp, Target, Flame, Clock, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { X, ExternalLink, TrendingUp, Target, Flame, Clock } from 'lucide-react';
 
 interface PLPoint {
   time: string;
@@ -246,12 +246,10 @@ export default function TraderDetailModal({
   traderId,
   isOpen,
   onClose,
-  isDark = true,
 }: {
   traderId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  isDark?: boolean;
 }) {
   const [trader, setTrader] = useState<Trader | null>(null);
   const [loading, setLoading] = useState(false);
@@ -324,17 +322,11 @@ export default function TraderDetailModal({
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="relative w-full max-w-sm max-h-[85vh] rounded-3xl overflow-hidden z-10 mx-2 mb-2 sm:mb-0"
             style={{
-              background: isDark
-                ? 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)'
-                : 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
               backdropFilter: 'blur(40px) saturate(180%)',
               WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-              border: isDark
-                ? '1px solid rgba(255,255,255,0.1)'
-                : '1px solid rgba(0,0,0,0.08)',
-              boxShadow: isDark
-                ? '0 1px 0 rgba(255,255,255,0.05) inset, 0 0 0 0.5px rgba(255,255,255,0.06), 0 24px 80px rgba(0,0,0,0.5)'
-                : '0 1px 0 rgba(255,255,255,0.8) inset, 0 0 0 0.5px rgba(0,0,0,0.04), 0 24px 80px rgba(0,0,0,0.15)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset, 0 0 0 0.5px rgba(255,255,255,0.06), 0 24px 80px rgba(0,0,0,0.5)',
             }}
           >
             {/* Scrollable Content */}

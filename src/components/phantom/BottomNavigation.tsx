@@ -13,7 +13,6 @@ export type TabId = 'overview' | 'traders' | 'activity' | 'profile';
 interface BottomNavigationProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
-  isDark?: boolean;
 }
 
 const tabs: { id: TabId; icon: typeof Home; label: string; tooltip: string }[] = [
@@ -23,15 +22,11 @@ const tabs: { id: TabId; icon: typeof Home; label: string; tooltip: string }[] =
   { id: 'profile', icon: UserCircle, label: 'Profile', tooltip: 'My subscription, balance, and AI generations' },
 ];
 
-export default function BottomNavigation({ activeTab, onTabChange, isDark = true }: BottomNavigationProps) {
+export default function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {
   return (
     <TooltipProvider delayDuration={400}>
       <nav
-        className={`fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl transition-colors duration-300 ${
-          isDark
-            ? 'bg-[#0A1628]/85 border-white/[0.06]'
-            : 'bg-white/85 border-gray-200'
-        }`}
+        className={`fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl transition-colors duration-300 bg-[#0A1628]/85 border-white/[0.06]`}
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
@@ -48,24 +43,22 @@ export default function BottomNavigation({ activeTab, onTabChange, isDark = true
                     onClick={() => onTabChange(tab.id)}
                     className={`flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-200 relative active:scale-90 ${
                       isActive
-                        ? (isDark ? 'text-phantom-primary' : 'text-gray-900')
-                        : (isDark ? 'text-white/30 hover:text-white/50' : 'text-gray-400 hover:text-gray-600')
+                        ? 'text-phantom-primary'
+                        : 'text-white/30 hover:text-white/50'
                     }`}
                   >
                     {isActive && (
-                      <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full transition-all duration-300 ${
-                        isDark ? 'bg-phantom-primary' : 'bg-gray-900'
-                      }`} />
+                      <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full transition-all duration-300 bg-phantom-primary`} />
                     )}
                     <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
                     <span className={`text-[10px] font-semibold transition-all duration-200 ${
-                      isActive ? (isDark ? 'text-phantom-primary' : 'text-gray-900') : ''
+                      isActive ? 'text-phantom-primary' : ''
                     }`}>
                       {tab.label}
                     </span>
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className={`text-xs ${isDark ? 'bg-[#0F1E33] text-gray-200 border-white/10' : 'bg-white text-gray-700 border-gray-200'}`}>
+                <TooltipContent side="top" className="text-xs bg-[#0F1E33] text-gray-200 border-white/10">
                   {tab.tooltip}
                 </TooltipContent>
               </Tooltip>
