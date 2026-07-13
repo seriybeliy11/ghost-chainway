@@ -16,12 +16,27 @@ model User {
   photoUrl          String?
   languageCode      String?
   isAuthorized      Boolean   @default(false)
-  initDataRaw       String?   // Raw Telegram initData JSON
+  initDataRaw       String?
   balance           Float     @default(0)
   generationsUsed   Int       @default(0)
   generationsLimit  Int       @default(10)
-  subscriptionStatus String   @default("free") // free, premium, pro
+  subscriptionStatus String   @default("free")
   subscriptionExpiry DateTime?
+  referralCode      String?   @unique
+  referredBy        String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  referrals         Referral[] @relation("InviterReferrals")
+}
+
+model Referral {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  inviterId     String
+  inviter       User     @relation("InviterReferrals", fields: [inviterId], references: [id])
+  referredId    String?  @unique
+  reward        Float    @default(0)
+  claimed       Boolean  @default(false)
+  createdAt     DateTime @default(now())
 }

@@ -21,7 +21,6 @@ import type { PolymarketEvent } from '@/components/phantom/EventCard';
 import SkeletonCard from '@/components/phantom/SkeletonCard';
 import EventModal from '@/components/phantom/EventModal';
 import PhantomVisionView from '@/components/phantom/PhantomVisionView';
-import TradingOverview from '@/components/phantom/TradingOverview';
 import TradersList from '@/components/phantom/TradersList';
 import TraderDetailModal from '@/components/phantom/TraderDetailModal';
 import ProfileView from '@/components/phantom/ProfileView';
@@ -434,8 +433,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Trading overview — below events */}
-                    <TradingOverview key={refreshKey} isDark={isDark} />
                   </motion.div>
                 )}
                 {activeTab === 'traders' && (
