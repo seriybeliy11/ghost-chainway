@@ -1,26 +1,24 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import dynamic from 'next/dynamic';
-import { useTheme } from 'next-themes';
-import { TrendingUp, Zap, RefreshCw, Sun, Moon } from 'lucide-react';
-import ProfileHeader from '@/components/phantom/ProfileHeader';
-import GhostParticles from '@/components/phantom/GhostParticles';
-import ProfileMenu from '@/components/phantom/ProfileMenu';
-import RefreshModal from '@/components/phantom/RefreshModal';
-import EventModal from '@/components/phantom/EventModal';
+import { Search, Info, TrendingUp, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+import GhostIcon from '@/components/phantom/GhostIcon';
+import BottomNavigation, { type TabId } from '@/components/phantom/BottomNavigation';
+import EventCarousel from '@/components/phantom/EventCarousel';
 import EventCard from '@/components/phantom/EventCard';
 import type { PolymarketEvent } from '@/components/phantom/EventCard';
 import SkeletonCard from '@/components/phantom/SkeletonCard';
-import GhostIcon from '@/components/phantom/GhostIcon';
-import Onboarding from '@/components/phantom/Onboarding';
-import PhantomVisionView from '@/components/phantom/PhantomVisionView';
-
-const Ghost3D = dynamic(() => import('@/components/phantom/Ghost3D'), {
-  ssr: false,
-  loading: () => <div className="w-full h-48 md:h-64" />,
-});
+import EventModal from '@/components/phantom/EventModal';
+import TradersList from '@/components/phantom/TradersList';
+import ProfileView from '@/components/phantom/ProfileView';
 
 interface TelegramUser {
   id: number;
@@ -34,280 +32,231 @@ interface TelegramUser {
 
 export default function Home() {
   const [user, setUser] = useState<TelegramUser | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [events, setEvents] = useState<PolymarketEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showGhostLoader, setShowGhostLoader] = useState(true);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
-  const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
-
-  // Check onboarding status after mount
   useEffect(() => {
-    if (!mounted) return;
-    const onboardingDone = localStorage.getItem('phantom_onboarding_done');
-    if (!onboardingDone) {
-      setShowOnboarding(true);
-    }
-  }, [mounted]);
-
-  const completeOnboarding = useCallback(() => {
-    localStorage.setItem('phantom_onboarding_done', 'true');
-    setShowOnboarding(false);
+    setUser({
+      id: 123456789,
+      first_name: 'Alex',
+      last_name: 'Phantom',
+      username: 'alex_phantom',
+      photo_url: '',
+      language_code: 'en',
+      isAuthorized: false,
+    });
   }, []);
 
-  const fetchEventsRef = useRef<(showSkeleton?: boolean) => Promise<void>>();
+  const fetchEventsRef = useRef<() => Promise<void>>();
 
-  const fetchEvents = useCallback(async (showSkeleton = true) => {
-    if (showSkeleton) {
-      setIsLoading(true);
-      setShowGhostLoader(true);
-    } else {
-      setIsRefreshing(true);
-    }
-
+  const fetchEvents = useCallback(async () => {
+    setIsLoadingEvents(true);
     try {
-      const response = await fetch('/api/polymarket');
-      const data = await response.json();
-      if (data.events && data.events.length > 0) {
-        setEvents(data.events);
-      }
-    } catch (error) {
-      console.error('Failed to fetch events:', error);
-    } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-        setIsRefreshing(false);
-        if (showSkeleton) {
-          setTimeout(() => setShowGhostLoader(false), 200);
-        }
-      }, 1000);
-    }
+      const res = await fetch('/api/polymarket');
+      const data = await res.json();
+      if (data.events?.length > 0) setEvents(data.events);
+    } catch { /* keep existing */ }
+    finally { setTimeout(() => setIsLoadingEvents(false), 300); }
   }, []);
 
   fetchEventsRef.current = fetchEvents;
+  useEffect(() => { fetchEventsRef.current?.(); }, []);
 
-  useEffect(() => {
-    fetchEventsRef.current?.(true);
-  }, []);
-
-  useEffect(() => {
-    const initTelegram = async () => {
-      try {
-        const { retrieveLaunchParams } = await import('@tma.js/sdk');
-        const launchParams = retrieveLaunchParams();
-        if (launchParams.initData?.user) {
-          const tgUser = launchParams.initData.user;
-          setUser({
-            id: tgUser.id,
-            first_name: tgUser.firstName,
-            last_name: tgUser.lastName || undefined,
-            username: tgUser.username || undefined,
-            photo_url: tgUser.photoUrl || undefined,
-            language_code: tgUser.languageCode || undefined,
-            isAuthorized: true,
-          });
-          return;
-        }
-      } catch {
-        // Not in Telegram environment
-      }
-      // Fallback user for dev preview
-      setUser({
-        id: 123456789,
-        first_name: 'Alex',
-        last_name: 'Phantom',
-        username: 'alex_phantom',
-        photo_url: '',
-        language_code: 'en',
-        isAuthorized: false,
-      });
-    };
-    initTelegram();
-  }, []);
-
-  const handleRefresh = () => {
-    if (isRefreshing) return;
-    fetchEventsRef.current?.(false);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
-  const isDark = theme === 'dark';
+  const filteredEvents = searchQuery.trim()
+    ? events.filter(e =>
+        e.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : events;
+  const featuredEvents = filteredEvents.slice(0, 4);
+  const otherEvents = filteredEvents.slice(4);
 
   return (
-    <main className={`min-h-screen flex flex-col transition-colors duration-500 ${isDark ? 'bg-phantom-dark' : 'bg-gray-50'} relative`}>
-      {/* Background ambient glows — static */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[120px] transition-colors duration-500 ${isDark ? 'bg-phantom-primary/6' : 'bg-blue-200/30'}`} />
-        <div className={`absolute top-1/4 -right-32 w-48 h-48 rounded-full blur-[100px] transition-colors duration-500 ${isDark ? 'bg-phantom-secondary-a/5' : 'bg-purple-200/25'}`} />
-        <div className={`absolute bottom-1/4 left-1/4 w-56 h-56 rounded-full blur-[140px] transition-colors duration-500 ${isDark ? 'bg-phantom-secondary-b/3' : 'bg-emerald-200/20'}`} />
-      </div>
-
-      {/* Ghost particles */}
-      <GhostParticles isDark={isDark} />
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <ProfileHeader
-          user={user}
-          isLoading={!user}
-          onMenuOpen={() => setIsMenuOpen(true)}
-          isDark={isDark}
-        />
-
-        <div className="flex-1 px-5 pt-4 pb-24">
-          {/* Stats bar — CSS animation instead of framer-motion */}
-          <div
-            className="flex items-center gap-3 mb-5 animate-[fadeInUp_0.5s_ease_0.1s_both]"
-          >
-            <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors duration-500 ${isDark ? 'glass-card' : 'glass-card-light'}`}>
-              <TrendingUp className={`w-3.5 h-3.5 ${isDark ? 'text-phantom-secondary-b' : 'text-emerald-600'}`} />
-              <span className={`text-xs font-semibold ${isDark ? 'text-white/80' : 'text-gray-700'}`}>Live</span>
-            </div>
-            <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors duration-500 ${isDark ? 'glass-card' : 'glass-card-light'}`}>
-              <Zap className={`w-3.5 h-3.5 ${isDark ? 'text-phantom-primary-light' : 'text-blue-600'}`} />
-              <span className={`text-xs font-semibold ${isDark ? 'text-white/80' : 'text-gray-700'}`}>Top Volume</span>
-            </div>
-            <div className="flex-1" />
-
-            {/* Theme toggle — simple CSS transition */}
-            {mounted && (
-              <button
-                onClick={toggleTheme}
-                className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 ${
-                  isDark ? 'glass-card hover:bg-white/[0.06]' : 'glass-card-light hover:bg-black/[0.04]'
-                }`}
-                aria-label="Toggle theme"
-              >
-                {isDark ? (
-                  <Sun className="w-4 h-4 text-amber-400" />
-                ) : (
-                  <Moon className="w-4 h-4 text-indigo-500" />
-                )}
-              </button>
-            )}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 disabled:opacity-50 ${
-                isDark ? 'glass-card hover:bg-white/[0.06]' : 'glass-card-light hover:bg-black/[0.04]'
-              }`}
-              aria-label="Refresh markets"
-            >
-              <RefreshCw className={`w-4 h-4 transition-transform duration-500 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'} ${isRefreshing ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-
-          {/* Loading or Events */}
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                className="space-y-6"
-              >
-                {showGhostLoader && (
-                  <div className="flex flex-col items-center gap-3">
-                    <Ghost3D />
-                    <p
-                      className={`text-xs font-medium animate-pulse transition-colors duration-500 ${isDark ? 'text-phantom-text-secondary' : 'text-gray-500'}`}
-                    >
-                      Scanning the markets...
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <SkeletonCard key={i} index={i} isDark={isDark} />
-                  ))}
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="events"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="space-y-3">
-                  {events.map((event, index) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      index={index}
-                      onClick={() => setSelectedEvent(event)}
-                      isDark={isDark}
-                    />
-                  ))}
-                </div>
-
-                {events.length > 0 && (
-                  <div
-                    className="flex flex-col items-center gap-2 pt-8 pb-4 animate-[fadeIn_0.5s_ease_0.3s_both]"
-                  >
-                    <GhostIcon className={`transition-colors duration-500 ${isDark ? 'text-phantom-primary/20' : 'text-gray-400/40'}`} size={18} />
-                    <p className={`text-[11px] transition-colors duration-500 ${isDark ? 'text-phantom-text-secondary/40' : 'text-gray-400/60'}`}>
-                      You&apos;re all caught up
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+    <TooltipProvider delayDuration={300}>
+      <main className="flex flex-col bg-phantom-dark relative min-h-screen">
+        {/* Background ambient glows */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[120px] bg-phantom-primary/6" />
+          <div className="absolute top-1/4 -right-32 w-48 h-48 rounded-full blur-[100px] bg-phantom-secondary-a/5" />
+          <div className="absolute bottom-1/4 left-1/4 w-56 h-56 rounded-full blur-[140px] bg-phantom-secondary-b/3" />
         </div>
 
-        {/* Sticky footer — CSS animation */}
-        <footer
-          className={`mt-auto px-5 py-3.5 border-t backdrop-blur-xl transition-colors duration-500 animate-[fadeIn_0.5s_ease_0.6s_both] ${
-            isDark ? 'border-white/[0.04] bg-phantom-dark/70' : 'border-gray-200 bg-white/70'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <GhostIcon className={`transition-colors duration-500 ${isDark ? 'text-phantom-primary/30' : 'text-gray-400/40'}`} size={14} />
-              <span className={`text-[10px] font-medium transition-colors duration-500 ${isDark ? 'text-phantom-text-secondary/30' : 'text-gray-400/50'}`}>Phantom</span>
+        <div className="relative z-10 flex flex-col flex-1 overflow-hidden">
+          {/* Search bar */}
+          <div className="shrink-0 px-4 pt-4 pb-3 backdrop-blur-2xl border-b border-white/[0.06] bg-[#0A1628]/80">
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex-1 flex items-center rounded-2xl bg-white/[0.06] border border-white/[0.08] focus-within:border-phantom-primary/40">
+                <Search className={`w-4 h-4 ml-3.5 shrink-0 ${
+                  searchQuery ? 'text-phantom-primary' : 'text-white/25'
+                }`} />
+                <input
+                  type="text"
+                  placeholder="Search markets..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent py-2.5 pl-2.5 pr-3 text-[14px] placeholder:font-normal outline-none text-white placeholder:text-white/25"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="mr-2 shrink-0 p-0.5 rounded-full hover:bg-white/10 text-white/30"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
-            <span className={`text-[10px] transition-colors duration-500 ${isDark ? 'text-phantom-text-secondary/25' : 'text-gray-400/40'}`}>Powered by Polymarket</span>
           </div>
-        </footer>
-      </div>
 
-      {/* Overlays */}
-      <ProfileMenu user={user} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} isDark={isDark} />
-      <RefreshModal isOpen={isRefreshing && !isLoading} isDark={isDark} />
-      <EventModal
-        event={selectedEvent}
-        isOpen={!!selectedEvent}
-        onClose={() => setSelectedEvent(null)}
-        onPhantomVision={selectedEvent ? () => setVisionEvent(selectedEvent) : undefined}
-        isDark={isDark}
-      />
-      <PhantomVisionView
-        event={visionEvent}
-        isOpen={!!visionEvent}
-        onClose={() => setVisionEvent(null)}
-      />
+          {/* Tab content */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="pb-24">
+              <AnimatePresence mode="wait">
+                {activeTab === 'overview' && (
+                  <motion.div
+                    key="overview"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {isLoadingEvents ? (
+                      <div className="px-5 pt-4 space-y-5">
+                        <div className="space-y-3">
+                          <div className="h-5 w-36 rounded-lg skeleton-shimmer bg-white/5" />
+                          <div className="flex gap-3 overflow-hidden">
+                            <div className="flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer bg-white/[0.03] border border-white/[0.05]" />
+                            <div className="flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer bg-white/[0.03] border border-white/[0.05]" />
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="h-5 w-40 rounded-lg skeleton-shimmer bg-white/5" />
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <SkeletonCard key={i} index={i} />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="px-5 pt-4">
+                        {featuredEvents.length > 0 && (
+                          <div className="section-fade-in" style={{ animationDelay: '0.05s' }}>
+                            <EventCarousel
+                              events={featuredEvents}
+                              onEventClick={setSelectedEvent}
+                            />
+                          </div>
+                        )}
 
-      {/* Onboarding overlay */}
-      <AnimatePresence>
-        {showOnboarding && (
-          <Onboarding
-            onComplete={completeOnboarding}
-            telegramUser={user}
-          />
-        )}
-      </AnimatePresence>
-    </main>
+                        {otherEvents.length > 0 && (
+                          <section className="mb-6 section-fade-in" style={{ animationDelay: '0.15s' }}>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-phantom-primary-light" />
+                                <h2 className="text-[16px] font-bold text-white">More Markets</h2>
+                              </div>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 text-white/30">
+                                    <Info className="w-3.5 h-3.5" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="max-w-[220px] text-[13px] bg-[#0F1E33] text-gray-200 border-white/10">
+                                  Active markets sorted by 24h volume
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <div className="space-y-3">
+                              {otherEvents.map((event, index) => (
+                                <div key={event.id} className="card-2d-enter" style={{ animationDelay: `${index * 60}ms` }}>
+                                  <EventCard event={event} index={index} onClick={() => setSelectedEvent(event)} />
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+                        )}
+
+                        {events.length > 0 && (
+                          <div className="flex flex-col items-center gap-1.5 pt-3 pb-4">
+                            <GhostIcon className="text-phantom-primary/20" size={16} />
+                            <p className="text-[13px] text-white/30">You&apos;re all caught up</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {activeTab === 'traders' && (
+                  <motion.div
+                    key="traders"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <TradersList />
+                  </motion.div>
+                )}
+
+                {activeTab === 'activity' && (
+                  <motion.div
+                    key="activity"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex flex-col items-center justify-center px-6 py-20"
+                  >
+                    <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-4 bg-white/[0.05]">
+                      <Search className="w-7 h-7 text-white/20" />
+                    </div>
+                    <h3 className="text-[16px] font-bold mb-1.5 text-white">Activity Feed</h3>
+                    <p className="text-[15px] text-center max-w-[260px] text-white/35">
+                      Your recent trades and market movements will appear here soon
+                    </p>
+                  </motion.div>
+                )}
+
+                {activeTab === 'profile' && (
+                  <motion.div
+                    key="profile"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <ProfileView user={user} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <footer className="shrink-0 px-5 py-2.5 border-t backdrop-blur-xl border-white/[0.04] bg-phantom-dark/70">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <GhostIcon className="text-phantom-primary/30" size={12} />
+                <span className="text-[10px] font-medium text-phantom-text-secondary/30">Phantom</span>
+              </div>
+              <span className="text-[10px] text-phantom-text-secondary/25">Powered by Polymarket</span>
+            </div>
+          </footer>
+        </div>
+
+        {/* Bottom Navigation */}
+        <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+
+        {/* Event Modal */}
+        <EventModal
+          event={selectedEvent}
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+        />
+      </main>
+    </TooltipProvider>
   );
 }
