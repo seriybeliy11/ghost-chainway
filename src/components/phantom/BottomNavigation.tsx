@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Users, BarChart3, UserCircle, Info } from 'lucide-react';
+import { BarChart3, Users, Ghost, UserCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -8,18 +8,18 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export type TabId = 'overview' | 'traders' | 'activity' | 'profile';
+export type TabId = 'overview' | 'traders' | 'phantoms' | 'profile';
 
 interface BottomNavigationProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
 }
 
-const tabs: { id: TabId; icon: typeof Home; label: string; tooltip: string }[] = [
-  { id: 'overview', icon: BarChart3, label: 'Overview', tooltip: 'Trading overview with top leader stats and charts' },
-  { id: 'traders', icon: Users, label: 'Traders', tooltip: 'Full list of top traders — tap to see their trade history' },
-  { id: 'activity', icon: Home, label: 'Feed', tooltip: 'Your recent trades and market movements' },
-  { id: 'profile', icon: UserCircle, label: 'Profile', tooltip: 'My subscription, balance, and AI generations' },
+const tabs: { id: TabId; icon: typeof Ghost; label: string; tooltip: string }[] = [
+  { id: 'overview', icon: BarChart3, label: 'Overview', tooltip: 'Hot prediction markets' },
+  { id: 'traders', icon: Users, label: 'Traders', tooltip: 'Top traders list' },
+  { id: 'phantoms', icon: Ghost, label: 'Phantoms', tooltip: 'Referral program — earn 10%' },
+  { id: 'profile', icon: UserCircle, label: 'Profile', tooltip: 'Subscription and balance' },
 ];
 
 export default function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {

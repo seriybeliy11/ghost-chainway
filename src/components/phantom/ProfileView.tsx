@@ -79,19 +79,19 @@ export default function ProfileView({ user }: ProfileViewProps) {
     });
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (plan: string = 'starter') => {
     if (!user || isPurchasing) return;
     setIsPurchasing(true);
     setPurchaseError(null);
     try {
-      const res = await fetch('/api/subscription/create', {
+      const res = await fetch('/api/payment/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramId: user.id, plan: 'premium' }),
+        body: JSON.stringify({ telegramId: user.id, plan }),
       });
       const data = await res.json();
-      if (data.url) {
-        window.open(data.url, '_blank');
+      if (data.payUrl) {
+        window.open(data.payUrl, '_blank');
       } else {
         setPurchaseError(data.error || 'Payment error');
       }
@@ -174,11 +174,11 @@ export default function ProfileView({ user }: ProfileViewProps) {
               </div>
             )}
 
-            <button onClick={handlePurchase} disabled={isPurchasing}
+            <button onClick={() => handlePurchase('starter')} disabled={isPurchasing}
               className="w-full rounded-2xl py-3.5 text-white font-semibold text-[15px] transition-all duration-200 active:scale-[0.97] hover:brightness-110 cursor-pointer flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(135deg, #057D9F, #03436A)' }}>
               {isPurchasing ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Zap className="w-4.5 h-4.5" />}
-              {isPurchasing ? 'Creating invoice...' : 'Buy Premium — $4 / 40 gens'}
+              {isPurchasing ? 'Creating invoice...' : 'Buy 20 Gens — $2 USDT'}
             </button>
 
             <AnimatePresence>

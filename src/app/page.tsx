@@ -19,6 +19,7 @@ import SkeletonCard from '@/components/phantom/SkeletonCard';
 import EventModal from '@/components/phantom/EventModal';
 import TradersList from '@/components/phantom/TradersList';
 import ProfileView from '@/components/phantom/ProfileView';
+import PhantomsView from '@/components/phantom/PhantomsView';
 import AboutScreen from '@/components/phantom/AboutScreen';
 import PhantomVisionView from '@/components/phantom/PhantomVisionView';
 
@@ -270,22 +271,15 @@ export default function Home() {
                   </motion.div>
                 )}
 
-                {activeTab === 'activity' && (
+                {activeTab === 'phantoms' && (
                   <motion.div
-                    key="activity"
+                    key="phantoms"
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex flex-col items-center justify-center px-6 py-20"
                   >
-                    <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-4 bg-white/[0.05]">
-                      <Search className="w-7 h-7 text-white/20" />
-                    </div>
-                    <h3 className="text-[16px] font-bold mb-1.5 text-white">Activity Feed</h3>
-                    <p className="text-[15px] text-center max-w-[260px] text-white/35">
-                      Your recent trades and market movements will appear here soon
-                    </p>
+                    <PhantomsView user={user} />
                   </motion.div>
                 )}
 

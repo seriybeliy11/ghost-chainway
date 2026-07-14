@@ -8,22 +8,26 @@ datasource db {
 }
 
 model TelegramUser {
-  id            Int      @id
-  firstName     String
-  lastName      String?
-  username      String?
-  photoUrl      String?
-  languageCode  String?
-  isBot         Boolean  @default(false)
-  authDate      DateTime @default(now())
-  referrerCode  String?  @unique
-  referredById  Int?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               Int               @id
+  firstName        String
+  lastName         String?
+  username         String?
+  photoUrl         String?
+  languageCode     String?
+  isBot            Boolean           @default(false)
+  authDate         DateTime          @default(now())
+  referrerCode     String?           @unique
+  referredById     Int?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
-  referrals     TelegramUser[]  @relation("Referrals")
-  parent        TelegramUser?   @relation("Referrals", fields: [referredById], references: [id])
-  subscriptions Subscription[]
+  referrals        TelegramUser[]    @relation("Referrals")
+  parent           TelegramUser?     @relation("Referrals", fields: [referredById], references: [id])
+  subscriptions    Subscription[]
+  purchases        Purchase[]
+  generations      Generation[]
+  earnedFrom       ReferralEarning[] @relation("ReferrerEarnings")
+  spentOn          ReferralEarning[] @relation("ReferredEarnings")
 
   @@unique([id])
   @@index([referrerCode])
@@ -36,6 +40,8 @@ model Subscription {
   planType        String       @default("free")
   generationsLeft Int          @default(5)
   totalPurchased  Int          @default(0)
+  totalUsed       Int          @default(0)
+  totalRefunded   Int          @default(0)
   isActive        Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -43,4 +49,58 @@ model Subscription {
   telegramUser    TelegramUser @relation(fields: [telegramUserId], references: [id])
 
   @@index([telegramUserId])
+}
+
+model Purchase {
+  id               String   @id @default(cuid())
+  telegramUserId   Int
+  amount           String
+  currency         String   @default("USDT")
+  orderId          String
+  invoiceId        String?
+  status           String   @default("pending")
+  generationsAdded Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  telegramUser     TelegramUser @relation(fields: [telegramUserId], references: [id])
+  referralEarnings ReferralEarning[]
+
+  @@unique([orderId])
+  @@index([telegramUserId])
+  @@index([status])
+}
+
+model Generation {
+  id              String   @id @default(cuid())
+  telegramUserId  Int
+  eventSlug       String
+  eventQuestion   String?
+  status          String   @default("pending")
+  result          String?
+  errorMessage    String?
+  refunded        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  telegramUser    TelegramUser @relation(fields: [telegramUserId], references: [id])
+
+  @@index([telegramUserId])
+  @@index([status])
+}
+
+model ReferralEarning {
+  id              String   @id @default(cuid())
+  referrerId      Int
+  referredId      Int
+  purchaseId      String
+  amount          String
+  percent         Int      @default(10)
+  createdAt       DateTime @default(now())
+
+  referrer        TelegramUser @relation("ReferrerEarnings", fields: [referrerId], references: [id])
+  referred        TelegramUser @relation("ReferredEarnings", fields: [referredId], references: [id])
+  purchase        Purchase     @relation(fields: [purchaseId], references: [id])
+
+  @@index([referrerId])
+  @@index([referredId])
 }
