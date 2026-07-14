@@ -404,3 +404,26 @@ Stage Summary:
 - API route correctly calls https://udify.app/v1/workflows/run with Bearer auth
 - Input to Dify: { inputs: { url: "https://gamma-api.polymarket.com/events?slug={slug}" }, response_mode: "blocking" }
 - Full UI flow verified: event card click → modal → Phantom Vision button → full-screen vision view → back navigation
+---
+Task ID: 2
+Agent: Main Agent
+Task: Telegram auth + About screen + cleanup
+
+Work Log:
+- Cleaned corrupted Turbopack .next cache, removed junk files (.ssh-proxy.js, ssh-proxy.js, start-server.sh, page.tsx.bak)
+- Updated Prisma schema: TelegramUser (self-referential referrals), Subscription models
+- Created /api/auth/telegram — HMAC-SHA256 validation of initData, user upsert, subscription creation
+- Integrated real Telegram Web App auth in page.tsx (window.Telegram.WebApp.initData → /api/auth/telegram)
+- Fallback to Guest mode when not in Telegram
+- Created AboutScreen with CSS ghost animation (floating ghost, particles, glow), creator info card
+- Added ghost icon button in search bar + Phantom link in footer to open About
+- Attempted Three.js (Canvas, OrbitControls, LatheGeometry ghost) — agent-browser has no WebGL, fell back to CSS animations
+- Removed Three.js packages (three, @react-three/fiber, @react-three/drei, @types/three)
+- Production build passes, all tabs verified via agent-browser
+
+Stage Summary:
+- Telegram auth: API + frontend integration ready (needs TELEGRAM_BOT_TOKEN env var)
+- About screen: CSS ghost animations with "Ghost Hunters" branding, creator info
+- Profile: Shows "Not Authorized" + "Open in Telegram" in web mode
+- All 4 tabs + About screen verified working
+- Lint clean, build clean

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Info, TrendingUp, X } from 'lucide-react';
+import { Search, Info, TrendingUp, X, Ghost } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Tooltip,
@@ -19,6 +19,7 @@ import SkeletonCard from '@/components/phantom/SkeletonCard';
 import EventModal from '@/components/phantom/EventModal';
 import TradersList from '@/components/phantom/TradersList';
 import ProfileView from '@/components/phantom/ProfileView';
+import AboutScreen from '@/components/phantom/AboutScreen';
 
 interface TelegramUser {
   id: number;
@@ -30,6 +31,33 @@ interface TelegramUser {
   isAuthorized: boolean;
 }
 
+// Extend window for Telegram Web App
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: {
+        initData: string;
+        initDataUnsafe: {
+          user?: {
+            id: number;
+            first_name: string;
+            last_name?: string;
+            username?: string;
+            photo_url?: string;
+            language_code?: string;
+          };
+          auth_date?: number;
+          hash?: string;
+        };
+        ready: () => void;
+        expand: () => void;
+        themeParams: Record<string, string>;
+        colorScheme: string;
+      };
+    };
+  }
+}
+
 export default function Home() {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,18 +65,50 @@ export default function Home() {
   const [events, setEvents] = useState<PolymarketEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
 
+  // Telegram auth
   useEffect(() => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.initData) {
+      tg.ready();
+      tg.expand();
+
+      fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: tg.initData }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.user) {
+            setUser({
+              id: data.user.id,
+              first_name: data.user.firstName,
+              last_name: data.user.lastName || undefined,
+              username: data.user.username || undefined,
+              photo_url: data.user.photoUrl || undefined,
+              isAuthorized: true,
+            });
+          }
+        })
+        .catch(() => {
+          // Fallback for web preview
+          setFallbackUser();
+        });
+    } else {
+      // Web preview mode
+      setFallbackUser();
+    }
+  }, []);
+
+  const setFallbackUser = () => {
     setUser({
-      id: 123456789,
-      first_name: 'Alex',
-      last_name: 'Phantom',
-      username: 'alex_phantom',
-      photo_url: '',
-      language_code: 'en',
+      id: 0,
+      first_name: 'Guest',
       isAuthorized: false,
     });
-  }, []);
+  };
 
   const fetchEventsRef = useRef<() => Promise<void>>();
 
@@ -102,12 +162,19 @@ export default function Home() {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="mr-2 shrink-0 p-0.5 rounded-full hover:bg-white/10 text-white/30"
+                    className="mr-2 shrink-0 p-0.5 rounded-full hover:bg-white/10 text-white/30 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
+              {/* About button */}
+              <button
+                onClick={() => setIsAboutOpen(true)}
+                className="shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center bg-white/[0.06] border border-white/[0.08] text-white/30 hover:text-phantom-primary hover:border-phantom-primary/30 transition-all duration-200 active:scale-90 cursor-pointer"
+              >
+                <Ghost className="w-4.5 h-4.5" />
+              </button>
             </div>
           </div>
 
@@ -238,10 +305,13 @@ export default function Home() {
           {/* Footer */}
           <footer className="shrink-0 px-5 py-2.5 border-t backdrop-blur-xl border-white/[0.04] bg-phantom-dark/70">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsAboutOpen(true)}
+                className="flex items-center gap-1.5 cursor-pointer"
+              >
                 <GhostIcon className="text-phantom-primary/30" size={12} />
-                <span className="text-[10px] font-medium text-phantom-text-secondary/30">Phantom</span>
-              </div>
+                <span className="text-[10px] font-medium text-phantom-text-secondary/30 hover:text-phantom-text-secondary/50 transition-colors">Phantom</span>
+              </button>
               <span className="text-[10px] text-phantom-text-secondary/25">Powered by Polymarket</span>
             </div>
           </footer>
@@ -256,6 +326,9 @@ export default function Home() {
           isOpen={!!selectedEvent}
           onClose={() => setSelectedEvent(null)}
         />
+
+        {/* About Screen */}
+        <AboutScreen isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
       </main>
     </TooltipProvider>
   );
