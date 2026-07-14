@@ -20,6 +20,7 @@ import EventModal from '@/components/phantom/EventModal';
 import TradersList from '@/components/phantom/TradersList';
 import ProfileView from '@/components/phantom/ProfileView';
 import AboutScreen from '@/components/phantom/AboutScreen';
+import PhantomVisionView from '@/components/phantom/PhantomVisionView';
 
 interface TelegramUser {
   id: number;
@@ -66,6 +67,7 @@ export default function Home() {
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
 
   // Telegram auth
   useEffect(() => {
@@ -325,6 +327,19 @@ export default function Home() {
           event={selectedEvent}
           isOpen={!!selectedEvent}
           onClose={() => setSelectedEvent(null)}
+          onPhantomVision={() => {
+            if (selectedEvent) {
+              setVisionEvent(selectedEvent);
+              setSelectedEvent(null);
+            }
+          }}
+        />
+
+        {/* Phantom Vision */}
+        <PhantomVisionView
+          isOpen={!!visionEvent}
+          event={visionEvent}
+          onClose={() => setVisionEvent(null)}
         />
 
         {/* About Screen */}
