@@ -18,6 +18,9 @@ model TelegramUser {
   authDate         DateTime          @default(now())
   referrerCode     String?           @unique
   referredById     Int?
+  balance          Float             @default(0)
+  totalEarned      Float             @default(0)
+  cashoutAddress   String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
@@ -95,6 +98,7 @@ model ReferralEarning {
   purchaseId      String
   amount          String
   percent         Int      @default(10)
+  cashedOut       Boolean  @default(false)
   createdAt       DateTime @default(now())
 
   referrer        TelegramUser @relation("ReferrerEarnings", fields: [referrerId], references: [id])

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { UserProvider } from "@/lib/user-context";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -42,8 +43,10 @@ export default function RootLayout({
         className={`${manrope.variable} antialiased`}
         style={{ fontFamily: "'Manrope', system-ui, -apple-system, sans-serif" }}
       >
-        {children}
-        <Toaster />
+        <UserProvider>
+          {children}
+          <Toaster />
+        </UserProvider>
       </body>
     </html>
   );

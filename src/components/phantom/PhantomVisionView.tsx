@@ -1,9 +1,10 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Copy, Check, AlertCircle, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useCallback, useContext } from 'react';
+import { ArrowLeft, Copy, Check, AlertCircle, RefreshCw, CreditCard } from 'lucide-react';
 import GhostIcon from './GhostIcon';
+import { UserContext } from '@/lib/user-context';
 
 interface PhantomVisionViewProps {
   isOpen: boolean;
@@ -40,10 +41,7 @@ function FlyingGhost({ delay, size, startX, duration }: {
       className="absolute"
       style={{ willChange: 'transform, opacity' }}
     >
-      <GhostIcon
-        size={size}
-        className="text-[#057D9F] opacity-60"
-      />
+      <GhostIcon size={size} className="text-[#057D9F] opacity-60" />
     </motion.div>
   );
 }
@@ -100,7 +98,6 @@ function ResultView({
   onCopy: () => void;
   copied: boolean;
 }) {
-  // Parse the result - try to render as markdown-like content
   const sections = result.split('\n').filter(Boolean);
 
   return (
@@ -130,32 +127,15 @@ function ResultView({
             const trimmed = line.trim();
             if (!trimmed) return null;
 
-            // Headers (## or **text**)
             if (trimmed.startsWith('## ')) {
-              return (
-                <h3 key={i} className="text-[15px] font-bold text-white pt-2">
-                  {trimmed.replace('## ', '')}
-                </h3>
-              );
+              return <h3 key={i} className="text-[15px] font-bold text-white pt-2">{trimmed.replace('## ', '')}</h3>;
             }
             if (trimmed.startsWith('# ')) {
-              return (
-                <h3 key={i} className="text-[16px] font-bold text-[#057D9F] pt-1">
-                  {trimmed.replace('# ', '')}
-                </h3>
-              );
+              return <h3 key={i} className="text-[16px] font-bold text-[#057D9F] pt-1">{trimmed.replace('# ', '')}</h3>;
             }
-
-            // Bold lines
             if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
-              return (
-                <p key={i} className="text-[14px] font-bold text-white/90">
-                  {trimmed.replace(/\*\*/g, '')}
-                </p>
-              );
+              return <p key={i} className="text-[14px] font-bold text-white/90">{trimmed.replace(/\*\*/g, '')}</p>;
             }
-
-            // List items
             if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
               return (
                 <div key={i} className="flex gap-2.5">
@@ -166,28 +146,16 @@ function ResultView({
                 </div>
               );
             }
-
-            // Numbered items
             if (/^\d+\.\s/.test(trimmed)) {
               const num = trimmed.match(/^(\d+)\./)?.[1];
               return (
                 <div key={i} className="flex gap-2.5">
-                  <span className="text-[14px] font-bold text-[#057D9F] shrink-0">
-                    {num}.
-                  </span>
-                  <p className="text-[14px] text-white/70 leading-relaxed">
-                    {renderInlineBold(trimmed.replace(/^\d+\.\s*/, ''))}
-                  </p>
+                  <span className="text-[14px] font-bold text-[#057D9F] shrink-0">{num}.</span>
+                  <p className="text-[14px] text-white/70 leading-relaxed">{renderInlineBold(trimmed.replace(/^\d+\.\s*/, ''))}</p>
                 </div>
               );
             }
-
-            // Regular paragraphs
-            return (
-              <p key={i} className="text-[14px] text-white/65 leading-relaxed">
-                {renderInlineBold(trimmed)}
-              </p>
-            );
+            return <p key={i} className="text-[14px] text-white/65 leading-relaxed">{renderInlineBold(trimmed)}</p>;
           })}
         </div>
       </div>
@@ -201,17 +169,7 @@ function ResultView({
           className="w-full py-3 rounded-2xl text-white font-semibold text-[14px] flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.97] cursor-pointer"
           style={{ background: 'linear-gradient(135deg, #057D9F, #03436A)' }}
         >
-          {copied ? (
-            <>
-              <Check className="w-4 h-4" />
-              Copied!
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4" />
-              Copy Analysis
-            </>
-          )}
+          {copied ? (<><Check className="w-4 h-4" />Copied!</>) : (<><Copy className="w-4 h-4" />Copy Analysis</>)}
         </button>
       </div>
     </motion.div>
@@ -222,11 +180,7 @@ function renderInlineBold(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <span key={i} className="font-semibold text-white/90">
-          {part.replace(/\*\*/g, '')}
-        </span>
-      );
+      return <span key={i} className="font-semibold text-white/90">{part.replace(/\*\*/g, '')}</span>;
     }
     return part;
   });
@@ -237,14 +191,14 @@ export default function PhantomVisionView({
   event,
   onClose,
 }: PhantomVisionViewProps) {
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const { user } = useContext(UserContext);
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'no_gens'>('loading');
   const [result, setResult] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [statusMsg, setStatusMsg] = useState(STATUS_MESSAGES[0]);
   const [copied, setCopied] = useState(false);
   const [elapsed, setElapsed] = useState(0);
 
-  // Rotating status messages
   useEffect(() => {
     if (status !== 'loading') return;
     const interval = setInterval(() => {
@@ -256,14 +210,12 @@ export default function PhantomVisionView({
     return () => clearInterval(interval);
   }, [status]);
 
-  // Elapsed timer
   useEffect(() => {
     if (status !== 'loading') return;
     const interval = setInterval(() => setElapsed(s => s + 1), 1000);
     return () => clearInterval(interval);
   }, [status]);
 
-  // Fetch from API
   const fetchVision = useCallback(async () => {
     if (!event?.slug) return;
     setStatus('loading');
@@ -272,20 +224,28 @@ export default function PhantomVisionView({
     setElapsed(0);
 
     try {
+      const body: Record<string, string> = { slug: event.slug };
+      if (user?.id) body.telegramId = String(user.id);
+
       const res = await fetch('/api/phantom-vision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: event.slug }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
+
+      if (!res.ok && data.code === 'NO_GENERATIONS') {
+        setStatus('no_gens');
+        setErrorMessage(data.error || 'No generations left');
+        return;
+      }
 
       if (!res.ok) {
         throw new Error(data.error || `Error ${res.status}`);
       }
 
       if (data.success && data.outputs) {
-        // Try to extract text from Dify outputs
         const outputKeys = Object.keys(data.outputs);
         const textKey = outputKeys.find(k =>
           k.toLowerCase().includes('text') ||
@@ -306,7 +266,7 @@ export default function PhantomVisionView({
       setErrorMessage(msg);
       setStatus('error');
     }
-  }, [event?.slug]);
+  }, [event?.slug, user?.id]);
 
   useEffect(() => {
     if (isOpen && event) {
@@ -338,7 +298,6 @@ export default function PhantomVisionView({
           transition={{ duration: 0.3 }}
           className="fixed inset-0 z-50 bg-[#0A1628] flex flex-col"
         >
-          {/* Flying ghosts background (loading only) */}
           {status === 'loading' && <LoadingState />}
 
           {/* Top bar */}
@@ -360,25 +319,16 @@ export default function PhantomVisionView({
                 {status === 'loading' && `Phantom Vision • ${formatTime(elapsed)}`}
                 {status === 'success' && 'Analysis Complete'}
                 {status === 'error' && 'Error'}
+                {status === 'no_gens' && 'No Generations'}
               </p>
             </div>
             {status === 'loading' && (
               <div className="flex gap-1">
-                <motion.div
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="w-1.5 h-1.5 rounded-full bg-[#057D9F]"
-                />
-                <motion.div
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
-                  className="w-1.5 h-1.5 rounded-full bg-[#057D9F]"
-                />
-                <motion.div
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.6 }}
-                  className="w-1.5 h-1.5 rounded-full bg-[#057D9F]"
-                />
+                {[0, 0.3, 0.6].map(d => (
+                  <motion.div key={d} animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: d }}
+                    className="w-1.5 h-1.5 rounded-full bg-[#057D9F]" />
+                ))}
               </div>
             )}
           </motion.div>
@@ -386,16 +336,9 @@ export default function PhantomVisionView({
           {/* Main content area */}
           <div className="relative z-10 flex-1 overflow-hidden">
             <AnimatePresence mode="wait">
-              {/* ── Loading ── */}
               {status === 'loading' && (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center h-full px-8 text-center"
-                >
-                  {/* Central ghost */}
+                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="flex flex-col items-center justify-center h-full px-8 text-center">
                   <motion.div
                     animate={{ y: [0, -12, 0], rotate: [-3, 3, -3] }}
                     transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -410,54 +353,49 @@ export default function PhantomVisionView({
                       />
                     </div>
                   </motion.div>
-
-                  <motion.p
-                    key={statusMsg}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-[15px] font-semibold text-white/70 mb-2"
-                  >
-                    {statusMsg}
-                  </motion.p>
-                  <p className="text-[12px] text-white/30">
-                    AI is analyzing this market
-                  </p>
+                  <motion.p key={statusMsg} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    className="text-[15px] font-semibold text-white/70 mb-2">{statusMsg}</motion.p>
+                  <p className="text-[12px] text-white/30">AI is analyzing this market</p>
                 </motion.div>
               )}
 
-              {/* ── Success ── */}
               {status === 'success' && (
-                <ResultView
-                  result={result}
-                  question={event.question}
-                  onCopy={handleCopy}
-                  copied={copied}
-                />
+                <ResultView result={result} question={event.question} onCopy={handleCopy} copied={copied} />
               )}
 
-              {/* ── Error ── */}
-              {status === 'error' && (
-                <motion.div
-                  key="error"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center h-full px-8 text-center"
-                >
-                  <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-5 bg-red-500/10 border border-red-500/15">
-                    <AlertCircle className="w-7 h-7 text-red-400/70" />
+              {status === 'no_gens' && (
+                <motion.div key="no_gens" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="flex flex-col items-center justify-center h-full px-8 text-center">
+                  <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-5 bg-amber-500/10 border border-amber-500/15">
+                    <CreditCard className="w-7 h-7 text-amber-400/70" />
                   </div>
-                  <h3 className="text-[17px] font-bold text-white mb-2">Vision Failed</h3>
+                  <h3 className="text-[17px] font-bold text-white mb-2">No Generations Left</h3>
                   <p className="text-[14px] text-white/40 mb-6 max-w-[280px] leading-relaxed">
                     {errorMessage}
                   </p>
                   <button
-                    onClick={fetchVision}
+                    onClick={onClose}
                     className="flex items-center gap-2.5 px-6 py-3 rounded-2xl text-white font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer"
                     style={{ background: 'linear-gradient(135deg, #057D9F, #03436A)' }}
                   >
-                    <RefreshCw className="w-4 h-4" />
-                    Retry
+                    Go to Profile
+                  </button>
+                </motion.div>
+              )}
+
+              {status === 'error' && (
+                <motion.div key="error" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="flex flex-col items-center justify-center h-full px-8 text-center">
+                  <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-5 bg-red-500/10 border border-red-500/15">
+                    <AlertCircle className="w-7 h-7 text-red-400/70" />
+                  </div>
+                  <h3 className="text-[17px] font-bold text-white mb-2">Vision Failed</h3>
+                  <p className="text-[14px] text-white/40 mb-6 max-w-[280px] leading-relaxed">{errorMessage}</p>
+                  <button onClick={fetchVision}
+                    className="flex items-center gap-2.5 px-6 py-3 rounded-2xl text-white font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer"
+                    style={{ background: 'linear-gradient(135deg, #057D9F, #03436A)' }}
+                  >
+                    <RefreshCw className="w-4 h-4" />Retry
                   </button>
                 </motion.div>
               )}

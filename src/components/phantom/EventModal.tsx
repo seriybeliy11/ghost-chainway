@@ -253,8 +253,11 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                       </button>
                     )}
                     {/* Trade on Polymarket */}
-                    <button
-                      className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98]"
+                    <a
+                      href="https://polymarket.com/?ref=maximzhidkov"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] no-underline"
                       style={{
                         background: isDark
                           ? 'linear-gradient(135deg, #406CFF, #6A00FF)'
@@ -266,7 +269,7 @@ export default function EventModal({ event, isOpen, onClose, onPhantomVision, is
                     >
                       <ExternalLink className="w-4 h-4" />
                       Trade on Polymarket
-                    </button>
+                    </a>
                   </div>
                 </div>
               </div>

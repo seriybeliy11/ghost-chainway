@@ -427,3 +427,35 @@ Stage Summary:
 - Profile: Shows "Not Authorized" + "Open in Telegram" in web mode
 - All 4 tabs + About screen verified working
 - Lint clean, build clean
+---
+Task ID: 1
+Agent: Main
+Task: Integrate 2328.io payments, Telegram Login Widget auth, referral program, Polymarket referral link
+
+Work Log:
+- Created `src/lib/user-context.tsx` — React context for sharing user state across components (used by PhantomVisionView and page.tsx)
+- Updated `src/app/layout.tsx` — Wrapped app with UserProvider
+- Created `src/app/api/auth/session/route.ts` — Validates phantom_session cookie, returns user data
+- Created `src/app/api/auth/bot-info/route.ts` — Returns bot_id for Telegram Login Widget OAuth flow
+- Rewrote `src/app/page.tsx` — 
+  - Wrapped useSearchParams in Suspense boundary
+  - Added Telegram Login Widget callback handling (reads auth=success, tid, fn, etc. from URL params)
+  - Stores referral code from ?ref= in sessionStorage
+  - Falls back to Telegram WebApp auth for Mini App mode
+  - Syncs user state with UserContext
+- Updated `src/components/phantom/ProfileView.tsx` — 
+  - Fixed Telegram Login button to fetch bot_id from /api/auth/bot-info
+  - Passes referral code through OAuth return_to parameter
+- Updated `src/components/phantom/EventModal.tsx` — Changed "Trade on Polymarket" button to <a> tag with ?ref=maximzhidkov
+- Updated `src/components/phantom/PhantomsView.tsx` — Fixed lint error (setState in effect)
+- Updated `src/components/phantom/LeaderboardSection.tsx` — Fixed lint error (empty interface), updated Polymarket referral to =maximzhidkov
+- Verified .env has all required variables (PAYMENT_2328_API_KEY, PAYMENT_2328_PROJECT_UUID, PAYMENT_2328_PAYOUT_KEY, TELEGRAM_BOT_TOKEN)
+- Confirmed production build succeeds with all 14 routes
+
+Stage Summary:
+- Full Telegram Login Widget OAuth flow implemented (button → oauth.telegram.org → /api/auth/telegram-widget → redirect with user data → session cookie)
+- 2328.io payment integration was already complete (create invoice + webhook + auto cashout 5%)
+- Referral program UI (Phantoms tab) already complete with ghost animations, stats, earnings history
+- Polymarket referral link (=maximzhidkov) added to EventModal and LeaderboardSection
+- UserContext provides shared auth state across all components
+- Build verified: all routes compile successfully

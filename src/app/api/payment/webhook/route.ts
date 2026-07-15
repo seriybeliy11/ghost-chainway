@@ -3,14 +3,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 const API_KEY = process.env.PAYMENT_2328_API_KEY || '';
+const PAYOUT_KEY = process.env.PAYMENT_2328_PAYOUT_KEY || '';
+const PROJECT_UUID = process.env.PAYMENT_2328_PROJECT_UUID || '';
+const API_BASE = 'https://api.2328.io';
 const REFERRAL_PERCENT = 10;
+const AUTO_CASHOUT_PERCENT = 5;
 
-// Pricing plans
-const PLANS: Record<string, number> = {
+// How many generations per amount
+const GENERATIONS_MAP: Record<string, number> = {
   '2.00': 20,
   '4.00': 50,
   '10.00': 150,
 };
+
+function apiSign(body: string, apiKey: string): string {
+  const base64 = Buffer.from(body, 'utf8').toString('base64');
+  return createHmac('sha256', apiKey).update(base64).digest('hex');
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,9 +63,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (status === 'paid' || status === 'success' || status === 'completed') {
-      // Mark purchase as paid
-      const generationsToAdd = PLANS[purchase.amount] || 20;
+      const generationsToAdd = GENERATIONS_MAP[purchase.amount] || 20;
 
+      // Mark purchase as paid
       await db.purchase.update({
         where: { orderId },
         data: { status: 'paid', generationsAdded: generationsToAdd, updatedAt: new Date() },
@@ -87,23 +96,83 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Referral commission
-      const user = await db.telegramUser.findUnique({
+      // Process referral commission
+      const buyer = await db.telegramUser.findUnique({
         where: { id: purchase.telegramUserId },
         include: { parent: true },
       });
 
-      if (user?.referredById && user.parent) {
-        const commission = (parseFloat(purchase.amount) * REFERRAL_PERCENT / 100).toFixed(2);
-        await db.referralEarning.create({
+      if (buyer?.referredById && buyer.parent) {
+        const purchaseAmount = parseFloat(purchase.amount);
+        const commission = (purchaseAmount * REFERRAL_PERCENT / 100).toFixed(2);
+        const cashoutAmount = (purchaseAmount * AUTO_CASHOUT_PERCENT / 100).toFixed(2);
+
+        // Record referral earning
+        const earning = await db.referralEarning.create({
           data: {
-            referrerId: user.referredById,
+            referrerId: buyer.referredById,
             referredId: purchase.telegramUserId,
             purchaseId: purchase.id,
             amount: commission,
             percent: REFERRAL_PERCENT,
+            cashedOut: false,
           },
         });
+
+        // Update referrer's balance and total earned
+        await db.telegramUser.update({
+          where: { id: buyer.referredById },
+          data: {
+            balance: { increment: parseFloat(commission) },
+            totalEarned: { increment: parseFloat(commission) },
+          },
+        });
+
+        // Auto cashout 5% if referrer has a cashout address
+        const referrer = await db.telegramUser.findUnique({
+          where: { id: buyer.referredById },
+          select: { cashoutAddress: true },
+        });
+
+        if (referrer?.cashoutAddress && PAYOUT_KEY && PROJECT_UUID) {
+          try {
+            const payoutPayload = {
+              address: referrer.cashoutAddress,
+              amount: cashoutAmount,
+              currency: 'USDT',
+              order_id: `CO-${buyer.referredById}-${purchase.id.slice(0, 8)}`,
+            };
+
+            const payoutBody = JSON.stringify(payoutPayload);
+            const payoutSign = apiSign(payoutBody, PAYOUT_KEY);
+
+            const payoutRes = await fetch(`${API_BASE}/api/v1/payout/create`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Project': PROJECT_UUID,
+                'X-Signature': payoutSign,
+              },
+              body: payoutBody,
+            });
+
+            if (payoutRes.ok) {
+              // Mark as cashed out
+              await db.referralEarning.update({
+                where: { id: earning.id },
+                data: { cashedOut: true },
+              });
+              console.log(`✅ Auto cashout $${cashoutAmount} to referrer ${buyer.referredById}`);
+            } else {
+              const errText = await payoutRes.text();
+              console.error('Payout failed:', errText);
+            }
+          } catch (payoutErr) {
+            console.error('Payout error:', payoutErr);
+          }
+        }
+
+        console.log(`💰 Referral: $${commission} commission to ${buyer.referredById} (auto cashout $${cashoutAmount})`);
       }
 
       return NextResponse.json({ ok: true });

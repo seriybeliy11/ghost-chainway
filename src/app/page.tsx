@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useContext, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, Info, TrendingUp, X, Ghost } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -22,6 +23,7 @@ import ProfileView from '@/components/phantom/ProfileView';
 import PhantomsView from '@/components/phantom/PhantomsView';
 import AboutScreen from '@/components/phantom/AboutScreen';
 import PhantomVisionView from '@/components/phantom/PhantomVisionView';
+import { UserContext } from '@/lib/user-context';
 
 interface TelegramUser {
   id: number;
@@ -31,36 +33,19 @@ interface TelegramUser {
   photo_url?: string;
   language_code?: string;
   isAuthorized: boolean;
+  referrerCode?: string;
+  planType?: string;
+  generationsLeft?: number;
 }
 
-// Extend window for Telegram Web App
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp: {
-        initData: string;
-        initDataUnsafe: {
-          user?: {
-            id: number;
-            first_name: string;
-            last_name?: string;
-            username?: string;
-            photo_url?: string;
-            language_code?: string;
-          };
-          auth_date?: number;
-          hash?: string;
-        };
-        ready: () => void;
-        expand: () => void;
-        themeParams: Record<string, string>;
-        colorScheme: string;
-      };
-    };
-  }
+// Wrapper with Suspense boundary for useSearchParams
+function HomePage() {
+  const searchParams = useSearchParams();
+  return <HomeContent searchParams={searchParams} />;
 }
 
-export default function Home() {
+function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSearchParams> }) {
+  const { user: contextUser, setUser: setContextUser } = useContext(UserContext);
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
@@ -70,48 +55,89 @@ export default function Home() {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
 
-  // Telegram auth
+  // Sync context user into local state
   useEffect(() => {
-    const tg = window.Telegram?.WebApp;
-    if (tg?.initData) {
-      tg.ready();
-      tg.expand();
+    if (contextUser && !user?.isAuthorized) {
+      setUser(contextUser as TelegramUser);
+    }
+  }, [contextUser, user?.isAuthorized]);
+
+  // Store referral code from URL for later use during signup
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      sessionStorage.setItem('phantom_ref', ref);
+    }
+  }, [searchParams]);
+
+  const updateUser = useCallback((u: TelegramUser | null) => {
+    setUser(u);
+    setContextUser(u);
+  }, [setContextUser]);
+
+  // Handle Telegram Login Widget callback (URL params from redirect)
+  useEffect(() => {
+    const authStatus = searchParams.get('auth');
+    if (authStatus === 'success') {
+      const tid = searchParams.get('tid');
+      const fn = searchParams.get('fn');
+      const ln = searchParams.get('ln');
+      const un = searchParams.get('un');
+      const pp = searchParams.get('pp');
+      const rc = searchParams.get('rc');
+      const gl = searchParams.get('gl');
+      const pt = searchParams.get('pt');
+
+      if (tid) {
+        const newUser: TelegramUser = {
+          id: parseInt(tid, 10),
+          first_name: decodeURIComponent(fn || 'User'),
+          last_name: ln ? decodeURIComponent(ln) : undefined,
+          username: un ? decodeURIComponent(un) : undefined,
+          photo_url: pp ? decodeURIComponent(pp) : undefined,
+          isAuthorized: true,
+          referrerCode: rc || undefined,
+          planType: pt || undefined,
+          generationsLeft: gl ? parseInt(gl, 10) : undefined,
+        };
+        updateUser(newUser);
+        // Clean URL without reload
+        window.history.replaceState({}, '', '/');
+      }
+    }
+  }, [searchParams, updateUser]);
+
+  // Fallback: try Telegram WebApp auth (for Mini App mode)
+  useEffect(() => {
+    if (user?.isAuthorized) return;
+
+    const tg = (window as unknown as { Telegram?: { WebApp: { initData: string; ready: () => void; expand: () => void } } }).Telegram;
+    if (tg?.WebApp?.initData) {
+      tg.WebApp.ready();
+      tg.WebApp.expand();
 
       fetch('/api/auth/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.initData }),
+        body: JSON.stringify({ initData: tg.WebApp.initData }),
       })
         .then(r => r.json())
         .then(data => {
           if (data.user) {
-            setUser({
+            updateUser({
               id: data.user.id,
               first_name: data.user.firstName,
               last_name: data.user.lastName || undefined,
               username: data.user.username || undefined,
               photo_url: data.user.photoUrl || undefined,
               isAuthorized: true,
+              referrerCode: data.user.referrerCode || undefined,
             });
           }
         })
-        .catch(() => {
-          // Fallback for web preview
-          setFallbackUser();
-        });
-    } else {
-      // Web preview mode
-      setFallbackUser();
+        .catch(() => {});
     }
   }, []);
-
-  const setFallbackUser = () => {
-    setUser({
-      id: 0,
-      first_name: 'Guest',
-      isAuthorized: false,
-    });
-  };
 
   const fetchEventsRef = useRef<() => Promise<void>>();
 
@@ -340,5 +366,13 @@ export default function Home() {
         <AboutScreen isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
       </main>
     </TooltipProvider>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomePage />
+    </Suspense>
   );
 }

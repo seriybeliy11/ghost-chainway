@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Send, Copy, Check, Gift, Zap, Crown, Loader2 } from 'lucide-react';
+import {
+  ShieldCheck, Copy, Check, Zap, Crown, Loader2,
+  ExternalLink, Wallet, RefreshCw, ChevronDown, ChevronUp,
+} from 'lucide-react';
 import GhostIcon from '@/components/phantom/GhostIcon';
 
 interface TelegramUser {
@@ -11,26 +14,36 @@ interface TelegramUser {
   last_name?: string;
   username?: string;
   photo_url?: string;
-  language_code?: string;
   isAuthorized: boolean;
+  referrerCode?: string;
 }
 
-interface DbUser {
-  id: string;
-  telegramId: number;
-  username: string | null;
+interface DbProfile {
+  id: number;
   firstName: string;
-  referralCode: string | null;
+  lastName: string | null;
+  username: string | null;
+  photoUrl: string | null;
+  referrerCode: string | null;
   balance: number;
-  generationsUsed: number;
-  generationsLimit: number;
-  subscriptionStatus: string;
-  subscriptionExpiry: string | null;
+  totalEarned: number;
+  cashoutAddress: string | null;
+  planType: string;
+  generationsLeft: number;
+  totalPurchased: number;
+  totalUsed: number;
+  purchaseCount: number;
 }
 
 interface ProfileViewProps {
   user: TelegramUser | null;
 }
+
+const PLANS = [
+  { id: 'starter', generations: 20, price: 2, label: '20 Gens' },
+  { id: 'pro', generations: 50, price: 4, label: '50 Gens' },
+  { id: 'whale', generations: 150, price: 10, label: '150 Gens' },
+];
 
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -41,17 +54,15 @@ const cardVariants = {
   }),
 };
 
-const COMMISSION_TIERS = [
-  { level: 1, percent: 30, label: 'Direct referral' },
-  { level: 2, percent: 10, label: '2nd level' },
-  { level: 3, percent: 5, label: '3rd level' },
-];
-
 export default function ProfileView({ user }: ProfileViewProps) {
-  const [dbUser, setDbUser] = useState<DbUser | null>(null);
+  const [profile, setProfile] = useState<DbProfile | null>(null);
   const [copied, setCopied] = useState(false);
-  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [showPurchases, setShowPurchases] = useState(false);
+  const [cashoutAddr, setCashoutAddr] = useState('');
+  const [savingCashout, setSavingCashout] = useState(false);
+  const [purchases, setPurchases] = useState<{ amount: string; createdAt: string; generationsAdded: number; status: string }[]>([]);
 
   const displayName = user
     ? `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`
@@ -60,34 +71,51 @@ export default function ProfileView({ user }: ProfileViewProps) {
     ? displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
   const isAuthorized = user?.isAuthorized ?? false;
-  const isPremium = dbUser?.subscriptionStatus === 'premium';
+  const isPremium = profile?.planType === 'premium';
 
-  // Fetch DB user data
+  // Fetch profile data
   useEffect(() => {
-    if (!isAuthorized || !user) return;
-    fetch(`/api/user?telegramId=${user.id}`)
+    if (!isAuthorized || !user?.id) return;
+
+    fetch(`/api/user/profile?telegramId=${user.id}`)
       .then(r => r.json())
-      .then(data => { if (data.user) setDbUser(data.user); })
+      .then(data => {
+        if (data.user) {
+          setProfile(data.user);
+          setCashoutAddr(data.user.cashoutAddress || '');
+        }
+      })
       .catch(() => {});
-  }, [isAuthorized, user]);
+
+    // Fetch purchase history
+    fetch(`/api/referrals/stats?telegramId=${user.id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.stats) {
+          // We'll use earnings history as proxy for now
+        }
+      })
+      .catch(() => {});
+  }, [isAuthorized, user?.id]);
 
   const handleCopy = () => {
-    if (!dbUser?.referralCode) return;
-    navigator.clipboard.writeText(dbUser.referralCode).then(() => {
+    if (!profile?.referrerCode) return;
+    const link = `https://ghost-chainway.vercel.app/?ref=${profile.referrerCode}`;
+    navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
 
-  const handlePurchase = async (plan: string = 'starter') => {
+  const handlePurchase = async (planId: string) => {
     if (!user || isPurchasing) return;
-    setIsPurchasing(true);
+    setIsPurchasing(planId);
     setPurchaseError(null);
     try {
       const res = await fetch('/api/payment/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramId: user.id, plan }),
+        body: JSON.stringify({ telegramId: user.id, plan: planId }),
       });
       const data = await res.json();
       if (data.payUrl) {
@@ -98,8 +126,30 @@ export default function ProfileView({ user }: ProfileViewProps) {
     } catch {
       setPurchaseError('Network error');
     } finally {
-      setIsPurchasing(false);
+      setIsPurchasing(null);
     }
+  };
+
+  const handleSaveCashout = async () => {
+    if (!user || !cashoutAddr) return;
+    setSavingCashout(true);
+    try {
+      await fetch('/api/user/cashout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId: user.id, cashoutAddress: cashoutAddr }),
+      });
+      setProfile(p => p ? { ...p, cashoutAddress: cashoutAddr } : p);
+    } catch {}
+    setSavingCashout(false);
+  };
+
+  const refreshProfile = () => {
+    if (!user?.id) return;
+    fetch(`/api/user/profile?telegramId=${user.id}`)
+      .then(r => r.json())
+      .then(data => { if (data.user) setProfile(data.user); })
+      .catch(() => {});
   };
 
   const cardBase = 'glass-card';
@@ -138,48 +188,84 @@ export default function ProfileView({ user }: ProfileViewProps) {
             </div>
           </motion.div>
 
-          {/* ── Subscription card ── */}
+          {/* ── Subscription & Balance card ── */}
           <motion.div custom={1} variants={cardVariants} initial="hidden" animate="visible"
             className={`${cardBase} rounded-3xl p-5 mt-4`}>
-            <div className="flex items-center gap-2 mb-4">
-              <Crown className={`w-4.5 h-4.5 ${isPremium ? 'text-amber-400' : 'text-white/40'}`} />
-              <span className={`text-[15px] font-bold ${textPrimary}`}>Subscription</span>
-              {isPremium && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">ACTIVE</span>
-              )}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Crown className={`w-4.5 h-4.5 ${isPremium ? 'text-amber-400' : 'text-white/40'}`} />
+                <span className={`text-[15px] font-bold ${textPrimary}`}>Subscription</span>
+                {isPremium && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">ACTIVE</span>
+                )}
+              </div>
+              <button onClick={refreshProfile} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/30 hover:text-white/60 transition-colors cursor-pointer">
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            {dbUser && (
-              <div className="space-y-3 mb-4">
+            {profile && (
+              <div className="space-y-3 mb-5">
                 <div className="flex items-center justify-between">
                   <span className={`text-[13px] ${textSecondary}`}>Plan</span>
-                  <span className={`text-[13px] font-semibold ${textPrimary}`}>
+                  <span className={`text-[13px] font-semibold ${isPremium ? 'text-amber-400' : textPrimary}`}>
                     {isPremium ? 'Premium' : 'Free'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className={`text-[13px] ${textSecondary}`}>Generations</span>
                   <span className={`text-[13px] font-semibold ${textPrimary}`}>
-                    {dbUser.generationsUsed} / {dbUser.generationsLimit}
+                    {profile.generationsLeft} left · {profile.totalUsed} used · {profile.totalPurchased} bought
                   </span>
                 </div>
-                {dbUser.balance > 0 && (
+
+                {/* Generations progress bar */}
+                {profile.totalPurchased > 0 && (
+                  <div className="mt-1">
+                    <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(100, (profile.totalUsed / profile.totalPurchased) * 100)}%`,
+                          background: 'linear-gradient(90deg, #057D9F, #009999)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {profile.totalEarned > 0 && (
                   <div className="flex items-center justify-between">
-                    <span className={`text-[13px] ${textSecondary}`}>Balance (commissions)</span>
+                    <span className={`text-[13px] ${textSecondary}`}>Total Earned</span>
                     <span className="text-[13px] font-bold text-emerald-400">
-                      ${dbUser.balance.toFixed(2)}
+                      ${profile.totalEarned.toFixed(2)}
                     </span>
                   </div>
                 )}
               </div>
             )}
 
-            <button onClick={() => handlePurchase('starter')} disabled={isPurchasing}
-              className="w-full rounded-2xl py-3.5 text-white font-semibold text-[15px] transition-all duration-200 active:scale-[0.97] hover:brightness-110 cursor-pointer flex items-center justify-center gap-2"
-              style={{ background: 'linear-gradient(135deg, #057D9F, #03436A)' }}>
-              {isPurchasing ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Zap className="w-4.5 h-4.5" />}
-              {isPurchasing ? 'Creating invoice...' : 'Buy 20 Gens — $2 USDT'}
-            </button>
+            {/* Purchase plans */}
+            <div className="space-y-2.5">
+              {PLANS.map(plan => (
+                <button
+                  key={plan.id}
+                  onClick={() => handlePurchase(plan.id)}
+                  disabled={isPurchasing === plan.id}
+                  className="w-full rounded-2xl py-3 text-white font-semibold text-[14px] transition-all duration-200 active:scale-[0.97] hover:brightness-110 cursor-pointer flex items-center justify-between px-4 border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07]"
+                >
+                  <div className="flex items-center gap-2.5">
+                    {isPurchasing === plan.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-[#057D9F]" />
+                    ) : (
+                      <Zap className="w-4 h-4 text-[#057D9F]" />
+                    )}
+                    <span>{plan.label}</span>
+                  </div>
+                  <span className="text-[#057D9F] font-bold">${plan.price} USDT</span>
+                </button>
+              ))}
+            </div>
 
             <AnimatePresence>
               {purchaseError && (
@@ -189,80 +275,108 @@ export default function ProfileView({ user }: ProfileViewProps) {
             </AnimatePresence>
           </motion.div>
 
-          {/* ── Referral Program card ── */}
+          {/* ── Cashout Address ── */}
           <motion.div custom={2} variants={cardVariants} initial="hidden" animate="visible"
             className={`${cardBase} rounded-3xl p-5 mt-4`}>
-            <div className="flex items-center gap-2 mb-4">
-              <Gift className="w-4.5 h-4.5 text-phantom-primary-light" />
-              <span className={`text-[15px] font-bold ${textPrimary}`}>Referral Program</span>
+            <div className="flex items-center gap-2 mb-3">
+              <Wallet className="w-4.5 h-4.5 text-[#057D9F]" />
+              <span className={`text-[15px] font-bold ${textPrimary}`}>USDT Cashout Address</span>
             </div>
 
-            {/* Referral code */}
-            <div className="flex items-center gap-3 rounded-2xl p-3.5 bg-white/[0.04] border border-white/[0.07]">
-              <div className="flex-1 min-w-0">
-                <p className={`text-[11px] font-medium mb-1 ${textMuted}`}>Your referral code</p>
-                {dbUser?.referralCode ? (
-                  <p className={`text-[20px] font-extrabold tracking-[0.15em] ${textPrimary}`}>{dbUser.referralCode}</p>
-                ) : (
-                  <div className="h-6 w-32 rounded-lg skeleton-shimmer bg-white/5" />
-                )}
-              </div>
-              <button onClick={handleCopy} disabled={!dbUser?.referralCode}
-                className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-90 ${
-                  copied
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'bg-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.1]'
-                }`}>
-                {copied ? <Check className="w-4.5 h-4.5" /> : <Copy className="w-4.5 h-4.5" />}
+            <p className={`text-[12px] ${textMuted} mb-3`}>
+              Set your TRC20/ERC20 address to receive auto-cashout (5% of referral purchases)
+            </p>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={cashoutAddr}
+                onChange={e => setCashoutAddr(e.target.value)}
+                placeholder="TXxx... or 0x..."
+                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[13px] text-white placeholder:text-white/20 outline-none focus:border-[#057D9F]/40 transition-colors"
+              />
+              <button
+                onClick={handleSaveCashout}
+                disabled={savingCashout}
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-[#057D9F]/20 text-[#057D9F] text-[13px] font-semibold hover:bg-[#057D9F]/30 transition-colors active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                {savingCashout ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
               </button>
             </div>
 
-            {/* Multi-level commission tiers */}
-            <div className="mt-4 space-y-2">
-              {COMMISSION_TIERS.map(tier => (
-                <div key={tier.level} className="flex items-center justify-between rounded-xl px-3.5 py-2.5 bg-white/[0.03]">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
-                      tier.level === 1
-                        ? 'bg-amber-500/20 text-amber-400'
-                        : 'bg-white/[0.06] text-white/40'
-                    }`}>
-                      {tier.level}
-                    </div>
-                    <span className={`text-[13px] ${textSecondary}`}>{tier.label}</span>
-                  </div>
-                  <span className={`text-[14px] font-bold ${
-                    tier.level === 1 ? 'text-emerald-400' : 'text-white/50'
-                  }`}>
-                    {tier.percent}%
-                  </span>
-                </div>
-              ))}
-            </div>
+            {profile?.cashoutAddress && (
+              <p className={`text-[11px] mt-2 ${textMuted}`}>
+                ✓ Active: <span className="font-mono text-white/30">{profile.cashoutAddress.slice(0, 8)}...{profile.cashoutAddress.slice(-6)}</span>
+              </p>
+            )}
+          </motion.div>
 
-            <p className={`text-[11px] mt-3 ${textMuted}`}>
-              Earn commissions when your referrals buy subscriptions. 3 levels deep.
-            </p>
+          {/* ── Trade on Polymarket ── */}
+          <motion.div custom={3} variants={cardVariants} initial="hidden" animate="visible"
+            className="mt-4">
+            <a
+              href="https://polymarket.com/?ref=maximzhidkov"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-3xl p-4 bg-gradient-to-r from-[#057D9F]/10 to-[#009999]/5 border border-[#057D9F]/15 hover:border-[#057D9F]/30 transition-all duration-300 group"
+            >
+              <div className="w-11 h-11 rounded-2xl bg-[#057D9F]/20 flex items-center justify-center shrink-0 group-hover:bg-[#057D9F]/30 transition-colors">
+                <ExternalLink size={20} className="text-[#057D9F]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-white">Trade on Polymarket</p>
+                <p className="text-[12px] text-white/40">Prediction markets · Real money</p>
+              </div>
+              <ExternalLink size={14} className="text-white/25 group-hover:text-[#057D9F] transition-colors shrink-0" />
+            </a>
           </motion.div>
         </>
       ) : (
-        /* ── Not authorized ── */
+        /* ── Not authorized — show Telegram Login ── */
         <motion.div custom={0} variants={cardVariants} initial="hidden" animate="visible"
           className="flex flex-col items-center pt-10 px-4">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-white/[0.05]">
-            <Send className="w-9 h-9 text-white/20" />
-          </div>
-          <h3 className={`text-[18px] font-bold mb-2 ${textPrimary}`}>Not Authorized</h3>
+          <motion.div
+            animate={{ y: [0, -8, 0], rotate: [-2, 2, -2] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-white/[0.05] border border-white/[0.08]"
+          >
+            <GhostIcon size={36} className="text-[#057D9F]/50" />
+          </motion.div>
+          <h3 className={`text-[18px] font-bold mb-2 ${textPrimary}`}>Join the Phantoms</h3>
           <p className={`text-[14px] text-center max-w-[260px] mb-6 leading-relaxed ${textSecondary}`}>
-            Open this app through Telegram to access your profile, referral program, and premium features
+            Sign in with Telegram to access predictions, referral program, and premium features
           </p>
-          <button type="button"
-            className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-white font-semibold text-[15px] transition-all duration-200 active:scale-[0.97] hover:brightness-110 cursor-pointer"
-            style={{ background: 'linear-gradient(135deg, #2AABEE, #229ED9)' }}>
-            <Send className="w-4.5 h-4.5" />
-            Open in Telegram
-          </button>
-          <p className={`text-[12px] mt-4 ${textMuted}`}>You&apos;re currently in preview mode</p>
+
+          {/* Telegram Login Widget */}
+          <div className="flex items-center justify-center">
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/auth/bot-info');
+                  const data = await res.json();
+                  if (data.botId) {
+                    const origin = encodeURIComponent(window.location.origin);
+                    // Pass ref code through OAuth flow if present
+                    const currentParams = new URLSearchParams(window.location.search);
+                    const refCode = currentParams.get('ref');
+                    let returnTo = '/api/auth/telegram-widget';
+                    if (refCode) returnTo += `?ref=${encodeURIComponent(refCode)}`;
+                    window.location.href = `https://oauth.telegram.org/auth?bot_id=${data.botId}&origin=${origin}&return_to=${encodeURIComponent(returnTo)}`;
+                  }
+                } catch {
+                  // fallback
+                }
+              }}
+              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-white font-semibold text-[15px] transition-all duration-200 active:scale-[0.97] hover:brightness-110 cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #2AABEE, #229ED9)' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.248-.024c-.106.024-1.793 1.14-5.062 3.345-.479.33-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.441-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.015 3.333-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.141.12.098.153.229.168.332.015.104.035.34.02.525z"/>
+              </svg>
+              Sign in with Telegram
+            </button>
+          </div>
+          <p className={`text-[12px] mt-4 ${textMuted}`}>Login via Telegram to continue</p>
         </motion.div>
       )}
     </div>
