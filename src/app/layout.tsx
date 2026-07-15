@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { UserProvider } from "@/lib/user-context";
+import { TelegramSDKProvider } from "@/lib/telegram-sdk";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -43,10 +44,12 @@ export default function RootLayout({
         className={`${manrope.variable} antialiased`}
         style={{ fontFamily: "'Manrope', system-ui, -apple-system, sans-serif" }}
       >
-        <UserProvider>
-          {children}
-          <Toaster />
-        </UserProvider>
+        <TelegramSDKProvider>
+          <UserProvider>
+            {children}
+            <Toaster />
+          </UserProvider>
+        </TelegramSDKProvider>
       </body>
     </html>
   );

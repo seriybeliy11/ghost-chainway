@@ -24,6 +24,7 @@ import PhantomsView from '@/components/phantom/PhantomsView';
 import AboutScreen from '@/components/phantom/AboutScreen';
 import PhantomVisionView from '@/components/phantom/PhantomVisionView';
 import { UserContext } from '@/lib/user-context';
+import { useTelegramSDK } from '@/lib/telegram-sdk';
 
 interface TelegramUser {
   id: number;
@@ -46,6 +47,7 @@ function HomePage() {
 
 function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSearchParams> }) {
   const { user: contextUser, setUser: setContextUser } = useContext(UserContext);
+  const tgSDK = useTelegramSDK();
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
@@ -55,12 +57,37 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
 
-  // Sync context user into local state
+  // Sync context user (from session cookie) into local state
   useEffect(() => {
     if (contextUser && !user?.isAuthorized) {
       setUser(contextUser as TelegramUser);
     }
   }, [contextUser, user?.isAuthorized]);
+
+  // Auto-authorize via Telegram WebApp SDK (Mini App mode)
+  useEffect(() => {
+    if (user?.isAuthorized) return;
+    if (!tgSDK.isInTelegram || !tgSDK.user) return;
+
+    setUser({
+      id: tgSDK.user.id,
+      first_name: tgSDK.user.first_name,
+      last_name: tgSDK.user.last_name,
+      username: tgSDK.user.username,
+      photo_url: tgSDK.user.photo_url,
+      isAuthorized: true,
+      language_code: tgSDK.user.language_code,
+    });
+    setContextUser({
+      id: tgSDK.user.id,
+      first_name: tgSDK.user.first_name,
+      last_name: tgSDK.user.last_name,
+      username: tgSDK.user.username,
+      photo_url: tgSDK.user.photo_url,
+      isAuthorized: true,
+      language_code: tgSDK.user.language_code,
+    });
+  }, [tgSDK.user, tgSDK.isInTelegram, user?.isAuthorized, setContextUser]);
 
   // Store referral code from URL for later use during signup
   useEffect(() => {
@@ -75,8 +102,9 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
     setContextUser(u);
   }, [setContextUser]);
 
-  // Handle Telegram Login Widget callback (URL params from redirect)
+  // Handle Telegram Login Widget callback (URL params from redirect, web-only)
   useEffect(() => {
+    if (tgSDK.isInTelegram) return; // Skip in Mini App — SDK handles auth
     const authStatus = searchParams.get('auth');
     if (authStatus === 'success') {
       const tid = searchParams.get('tid');
@@ -101,43 +129,10 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
           generationsLeft: gl ? parseInt(gl, 10) : undefined,
         };
         updateUser(newUser);
-        // Clean URL without reload
         window.history.replaceState({}, '', '/');
       }
     }
-  }, [searchParams, updateUser]);
-
-  // Fallback: try Telegram WebApp auth (for Mini App mode)
-  useEffect(() => {
-    if (user?.isAuthorized) return;
-
-    const tg = (window as unknown as { Telegram?: { WebApp: { initData: string; ready: () => void; expand: () => void } } }).Telegram;
-    if (tg?.WebApp?.initData) {
-      tg.WebApp.ready();
-      tg.WebApp.expand();
-
-      fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.WebApp.initData }),
-      })
-        .then(r => r.json())
-        .then(data => {
-          if (data.user) {
-            updateUser({
-              id: data.user.id,
-              first_name: data.user.firstName,
-              last_name: data.user.lastName || undefined,
-              username: data.user.username || undefined,
-              photo_url: data.user.photoUrl || undefined,
-              isAuthorized: true,
-              referrerCode: data.user.referrerCode || undefined,
-            });
-          }
-        })
-        .catch(() => {});
-    }
-  }, []);
+  }, [searchParams, updateUser, tgSDK.isInTelegram]);
 
   const fetchEventsRef = useRef<() => Promise<void>>();
 

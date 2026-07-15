@@ -7,6 +7,7 @@ import {
   ExternalLink, Wallet, RefreshCw, AlertCircle, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import GhostIcon from '@/components/phantom/GhostIcon';
+import { useTelegramSDK } from '@/lib/telegram-sdk';
 
 interface TelegramUser {
   id: number;
@@ -55,6 +56,7 @@ const cardVariants = {
 };
 
 export default function ProfileView({ user }: ProfileViewProps) {
+  const tgSDK = useTelegramSDK();
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
@@ -63,40 +65,14 @@ export default function ProfileView({ user }: ProfileViewProps) {
   const [cashoutAddr, setCashoutAddr] = useState('');
   const [savingCashout, setSavingCashout] = useState(false);
   const [purchases, setPurchases] = useState<{ amount: string; createdAt: string; generationsAdded: number; status: string }[]>([]);
-  const [isMiniApp] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return !!((window as unknown as Record<string, unknown>).Telegram);
-  });
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [isAuthRetrying, setIsAuthRetrying] = useState(false);
 
   const retryMiniAppAuth = useCallback(async () => {
-    setIsAuthRetrying(true);
-    setAuthError(null);
-    try {
-      const tg = (window as unknown as { Telegram?: { WebApp: { initData: string } } }).Telegram;
-      if (!tg?.WebApp?.initData) {
-        setAuthError('No Telegram data available. Reopen the app from the bot.');
-        return;
-      }
-      const res = await fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.WebApp.initData }),
-      });
-      const data = await res.json();
-      if (data.user) {
-        // Trigger page reload to pick up the session cookie
-        window.location.reload();
-      } else {
-        setAuthError(data.error || 'Auth failed');
-      }
-    } catch {
-      setAuthError('Network error');
-    } finally {
-      setIsAuthRetrying(false);
+    if (!tgSDK.rawInitData) return;
+    const result = await tgSDK.sendAuthRequest(tgSDK.rawInitData);
+    if (result) {
+      window.location.reload();
     }
-  }, []);
+  }, [tgSDK]);
 
   const displayName = user
     ? `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`
@@ -365,8 +341,8 @@ export default function ProfileView({ user }: ProfileViewProps) {
             </a>
           </motion.div>
         </>
-      ) : isMiniApp ? (
-        /* ── Mini App: auto-auth via initData ── */
+      ) : tgSDK.isInTelegram ? (
+        /* ── Mini App: auto-auth via WebApp SDK ── */
         <motion.div custom={0} variants={cardVariants} initial="hidden" animate="visible"
           className="flex flex-col items-center pt-10 px-4">
           <motion.div
@@ -380,19 +356,19 @@ export default function ProfileView({ user }: ProfileViewProps) {
           <p className={`text-[14px] text-center max-w-[260px] mb-4 leading-relaxed ${textSecondary}`}>
             Authorizing via Telegram Mini App
           </p>
-          {authError ? (
+          {tgSDK.authError ? (
             <div className="flex flex-col items-center gap-3">
               <div className="flex items-center gap-2 text-red-400/80">
                 <AlertCircle className="w-4 h-4" />
-                <span className="text-[12px]">{authError}</span>
+                <span className="text-[12px]">{tgSDK.authError}</span>
               </div>
               <button
                 onClick={retryMiniAppAuth}
-                disabled={isAuthRetrying}
-                className="flex items-center gap-2 px-5 py-3 rounded-2xl text-white font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer"
+                disabled={tgSDK.isAuthenticating}
+                className="flex items-center gap-2 px-5 py-3 rounded-2xl text-white font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, #2AABEE, #229ED9)' }}
               >
-                {isAuthRetrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                {tgSDK.isAuthenticating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                 Retry
               </button>
             </div>
