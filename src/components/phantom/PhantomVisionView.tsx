@@ -224,7 +224,8 @@ export default function PhantomVisionView({
     setElapsed(0);
 
     try {
-      const body: Record<string, string> = { slug: event.slug, eventQuestion: event.question };
+      const eventUrl = `https://gamma.polymarket.com/events/${event.slug}`;
+      const body: Record<string, string> = { url: eventUrl, eventQuestion: event.question };
       if (user?.id) body.telegramId = String(user.id);
 
       const res = await fetch('/api/phantom-vision', {
@@ -266,7 +267,7 @@ export default function PhantomVisionView({
       setErrorMessage(msg);
       setStatus('error');
     }
-  }, [event?.slug, user?.id]);
+  }, [event?.slug, event?.question, user?.id]);
 
   useEffect(() => {
     if (isOpen && event) {

@@ -9,12 +9,16 @@ function createHmacSha256(key: Buffer, data: string): Buffer {
 function parseInitData(initData: string): Record<string, string> {
   const params: Record<string, string> = {};
   initData.split('&').forEach(pair => {
-    const [key, value] = pair.split('=');
-    params[decodeURIComponent(key)] = decodeURIComponent(value);
+    const eqIdx = pair.indexOf('=');
+    if (eqIdx === -1) return;
+    const key = decodeURIComponent(pair.slice(0, eqIdx));
+    const value = decodeURIComponent(pair.slice(eqIdx + 1));
+    params[key] = value;
   });
   return params;
 }
 
+// POST /api/auth/telegram — validate Telegram Mini App initData
 export async function POST(request: NextRequest) {
   try {
     const { initData } = await request.json();
@@ -28,9 +32,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
     }
 
-    // Validate initData
+    // Parse and validate initData
     const params = parseInitData(initData);
     const hash = params['hash'];
+    if (!hash) {
+      return NextResponse.json({ error: 'No hash in initData' }, { status: 400 });
+    }
     delete params['hash'];
 
     // Sort remaining params and create data-check-string
@@ -39,6 +46,7 @@ export async function POST(request: NextRequest) {
       .map(key => `${key}=${params[key]}`)
       .join('\n');
 
+    // Telegram Mini App validation: HMAC-SHA256(HMAC-SHA256("WebAppData", bot_token), data_check_string)
     const secretKey = createHmacSha256(
       Buffer.from('WebAppData', 'utf-8'),
       Buffer.from(botToken, 'utf-8')
@@ -47,13 +55,14 @@ export async function POST(request: NextRequest) {
     const calculatedHashHex = calculatedHash.toString('hex');
 
     if (calculatedHashHex !== hash) {
+      console.warn('[auth/telegram] Invalid hash');
       return NextResponse.json({ error: 'Invalid auth data' }, { status: 401 });
     }
 
-    // Check auth date (max 5 minutes old)
+    // Check auth date (max 5 minutes old for fresh logins, 1 hour for returning users)
     const authDate = parseInt(params['auth_date'], 10);
     const now = Math.floor(Date.now() / 1000);
-    if (now - authDate > 300) {
+    if (now - authDate > 3600) {
       return NextResponse.json({ error: 'Auth data expired' }, { status: 401 });
     }
 
@@ -63,6 +72,17 @@ export async function POST(request: NextRequest) {
     const username = params['username'] || null;
     const photoUrl = params['photo_url'] || null;
     const languageCode = params['language_code'] || null;
+
+    // Extract referral from start_param (Mini App deep link: ?startapp=REF_CODE)
+    let referredById: number | null = null;
+    const startParam = params['start_param'];
+    if (startParam) {
+      const referrer = await db.telegramUser.findUnique({
+        where: { referrerCode: startParam },
+        select: { id: true },
+      });
+      if (referrer) referredById = referrer.id;
+    }
 
     // Upsert user
     const user = await db.telegramUser.upsert({
@@ -75,6 +95,7 @@ export async function POST(request: NextRequest) {
         photoUrl,
         languageCode,
         referrerCode: `ph_${telegramId}`,
+        referredById,
       },
       update: {
         firstName,
@@ -102,7 +123,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    // Create session token and set cookie
+    const sessionToken = Buffer.from(
+      JSON.stringify({ tid: user.id, ts: Date.now() })
+    ).toString('base64url');
+
+    const response = NextResponse.json({
       user: {
         id: user.id,
         firstName: user.firstName,
@@ -118,8 +144,19 @@ export async function POST(request: NextRequest) {
         totalPurchased: subscription.totalPurchased,
       },
     });
+
+    // Set session cookie so auth persists across reloads
+    response.cookies.set('phantom_session', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
-    console.error('Telegram auth error:', error);
+    console.error('[auth/telegram] error:', error);
     return NextResponse.json({ error: 'Auth failed' }, { status: 500 });
   }
 }

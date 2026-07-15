@@ -22,10 +22,16 @@ interface DifyWorkflowResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { slug, telegramId, eventQuestion } = await request.json();
+    const { url, telegramId, eventQuestion, slug } = await request.json();
 
-    if (!slug || typeof slug !== 'string') {
-      return NextResponse.json({ error: 'slug is required' }, { status: 400 });
+    // Accept either `url` (gamma card URL) or construct from `slug`
+    let eventUrl: string;
+    if (url) {
+      eventUrl = url;
+    } else if (slug) {
+      eventUrl = `https://gamma.polymarket.com/events/${slug}`;
+    } else {
+      return NextResponse.json({ error: 'url or slug is required' }, { status: 400 });
     }
 
     if (!DIFY_WORKFLOW_KEY) {
@@ -53,7 +59,7 @@ export async function POST(request: NextRequest) {
       const generation = await db.generation.create({
         data: {
           telegramUserId: telegramId,
-          eventSlug: slug,
+          eventSlug: slug || eventUrl,
           eventQuestion: eventQuestion || null,
           status: 'running',
         },
@@ -72,22 +78,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Call Dify workflow
-    const gammaUrl = `https://gamma-api.polymarket.com/events?slug=${encodeURIComponent(slug)}`;
-
+    // Call Dify workflow with the gamma card URL
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120_000);
 
     let difyResponse: Response;
     try {
-      difyResponse = await fetch(`${DIFY_API_URL}/api/workflows/run`, {
+      difyResponse = await fetch(`${DIFY_API_URL}/v1/workflows/run`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${DIFY_WORKFLOW_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          inputs: { url: gammaUrl },
+          inputs: { url: eventUrl },
           response_mode: 'blocking',
           user: 'phantom-tma',
         }),
@@ -99,10 +103,10 @@ export async function POST(request: NextRequest) {
 
     if (!difyResponse.ok) {
       const errorText = await difyResponse.text();
-      console.error('Dify API error:', difyResponse.status, errorText);
+      console.error('[phantom-vision] Dify API error:', difyResponse.status, errorText);
 
       // Refund generation on Dify error
-      if (generationId && subscriptionId) {
+      if (generationId && subscriptionId && telegramId) {
         await refundGeneration(generationId, subscriptionId, telegramId, `Dify error ${difyResponse.status}`);
       }
 
@@ -146,17 +150,13 @@ export async function POST(request: NextRequest) {
     const difyError = data.data?.error || 'Pipeline returned unexpected response';
 
     // Refund generation
-    if (generationId && subscriptionId) {
+    if (generationId && subscriptionId && telegramId) {
       await refundGeneration(generationId, subscriptionId, telegramId, difyError);
-    }
-
-    if (data.data?.error) {
-      return NextResponse.json({ error: difyError }, { status: 502 });
     }
 
     return NextResponse.json({ error: difyError }, { status: 502 });
   } catch (error) {
-    console.error('Phantom Vision error:', error);
+    console.error('[phantom-vision] error:', error);
     const msg = error instanceof Error && error.name === 'AbortError'
       ? 'Pipeline timed out after 2 minutes. Try again.'
       : 'Internal server error';
@@ -185,7 +185,7 @@ async function refundGeneration(
         where: { id: generationId },
         data: { status: 'failed', errorMessage, refunded: false },
       });
-      console.log(`🛡️ Anti-farm: refund blocked for user ${telegramId} (rate: ${Math.round(refundRate * 100)}%)`);
+      console.log(`[phantom-vision] Anti-farm: refund blocked for user ${telegramId} (rate: ${Math.round(refundRate * 100)}%)`);
       return;
     }
 
@@ -203,8 +203,8 @@ async function refundGeneration(
       },
     });
 
-    console.log(`↩️ Refunded generation ${generationId} for user ${telegramId}`);
+    console.log(`[phantom-vision] Refunded generation ${generationId} for user ${telegramId}`);
   } catch (err) {
-    console.error('Refund error:', err);
+    console.error('[phantom-vision] Refund error:', err);
   }
 }

@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { createHmac, createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
@@ -6,7 +6,7 @@ function createHmacSha256(key: Buffer, data: string): Buffer {
   return createHmac('sha256', key).update(data).digest();
 }
 
-// Telegram Login Widget sends auth data as query params
+// Telegram Login Widget sends auth data as query params (redirect from oauth.telegram.org)
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -50,15 +50,13 @@ export async function GET(request: NextRequest) {
       .map(key => `${key}=${params[key]}`)
       .join('\n');
 
-    // Calculate HMAC-SHA256
-    const secretKey = createHmacSha256(
-      Buffer.from('WebAppData', 'utf-8'),
-      Buffer.from(botToken, 'utf-8')
-    );
+    // Login Widget validation: HMAC-SHA256(SHA256(bot_token), data_check_string)
+    // See: https://core.telegram.org/widgets/login#checking-authorization
+    const secretKey = createHash('sha256').update(botToken).digest();
     const calculatedHash = createHmacSha256(secretKey, dataCheckString).toString('hex');
 
     if (calculatedHash !== hash) {
-      console.warn('Telegram widget: invalid hash');
+      console.warn('[auth/telegram-widget] invalid hash');
       return NextResponse.redirect(new URL('/?auth_error=invalid', request.url));
     }
 
@@ -70,7 +68,6 @@ export async function GET(request: NextRequest) {
     // Upsert user
     let referredById: number | null = null;
 
-    // If ref code provided and user is new, find the referrer
     if (refCode) {
       const referrer = await db.telegramUser.findUnique({
         where: { referrerCode: refCode },
@@ -117,7 +114,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Create a session token (simple approach: encode user id + timestamp)
+    // Create a session token
     const sessionToken = Buffer.from(
       JSON.stringify({ tid: user.id, ts: Date.now() })
     ).toString('base64url');
@@ -135,7 +132,6 @@ export async function GET(request: NextRequest) {
     redirectUrl.searchParams.set('pt', subscription.planType);
 
     const response = NextResponse.redirect(redirectUrl);
-    // Set a session cookie
     response.cookies.set('phantom_session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -146,7 +142,7 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Telegram widget auth error:', error);
+    console.error('[auth/telegram-widget] error:', error);
     return NextResponse.redirect(new URL('/?auth_error=server', request.url));
   }
 }
