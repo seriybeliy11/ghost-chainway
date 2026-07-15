@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     let difyResponse: Response;
     try {
-      difyResponse = await fetch(`${DIFY_API_URL}/v1/workflows/run`, {
+      difyResponse = await fetch(`${DIFY_API_URL}/api/workflows/run`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${DIFY_WORKFLOW_KEY}`,

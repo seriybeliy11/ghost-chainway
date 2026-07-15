@@ -224,7 +224,7 @@ export default function PhantomVisionView({
     setElapsed(0);
 
     try {
-      const body: Record<string, string> = { slug: event.slug };
+      const body: Record<string, string> = { slug: event.slug, eventQuestion: event.question };
       if (user?.id) body.telegramId = String(user.id);
 
       const res = await fetch('/api/phantom-vision', {
