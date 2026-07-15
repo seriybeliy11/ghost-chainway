@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck, Copy, Check, Zap, Crown, Loader2,
-  ExternalLink, Wallet, RefreshCw, ChevronDown, ChevronUp,
+  ExternalLink, Wallet, RefreshCw, AlertCircle, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import GhostIcon from '@/components/phantom/GhostIcon';
 
@@ -63,6 +63,40 @@ export default function ProfileView({ user }: ProfileViewProps) {
   const [cashoutAddr, setCashoutAddr] = useState('');
   const [savingCashout, setSavingCashout] = useState(false);
   const [purchases, setPurchases] = useState<{ amount: string; createdAt: string; generationsAdded: number; status: string }[]>([]);
+  const [isMiniApp] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !!((window as unknown as Record<string, unknown>).Telegram);
+  });
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthRetrying, setIsAuthRetrying] = useState(false);
+
+  const retryMiniAppAuth = useCallback(async () => {
+    setIsAuthRetrying(true);
+    setAuthError(null);
+    try {
+      const tg = (window as unknown as { Telegram?: { WebApp: { initData: string } } }).Telegram;
+      if (!tg?.WebApp?.initData) {
+        setAuthError('No Telegram data available. Reopen the app from the bot.');
+        return;
+      }
+      const res = await fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: tg.WebApp.initData }),
+      });
+      const data = await res.json();
+      if (data.user) {
+        // Trigger page reload to pick up the session cookie
+        window.location.reload();
+      } else {
+        setAuthError(data.error || 'Auth failed');
+      }
+    } catch {
+      setAuthError('Network error');
+    } finally {
+      setIsAuthRetrying(false);
+    }
+  }, []);
 
   const displayName = user
     ? `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`
@@ -331,8 +365,44 @@ export default function ProfileView({ user }: ProfileViewProps) {
             </a>
           </motion.div>
         </>
+      ) : isMiniApp ? (
+        /* ── Mini App: auto-auth via initData ── */
+        <motion.div custom={0} variants={cardVariants} initial="hidden" animate="visible"
+          className="flex flex-col items-center pt-10 px-4">
+          <motion.div
+            animate={{ y: [0, -8, 0], rotate: [-2, 2, -2] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 bg-white/[0.05] border border-white/[0.08]"
+          >
+            <GhostIcon size={36} className="text-[#057D9F]/50" />
+          </motion.div>
+          <h3 className={`text-[18px] font-bold mb-2 ${textPrimary}`}>Connecting...</h3>
+          <p className={`text-[14px] text-center max-w-[260px] mb-4 leading-relaxed ${textSecondary}`}>
+            Authorizing via Telegram Mini App
+          </p>
+          {authError ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 text-red-400/80">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-[12px]">{authError}</span>
+              </div>
+              <button
+                onClick={retryMiniAppAuth}
+                disabled={isAuthRetrying}
+                className="flex items-center gap-2 px-5 py-3 rounded-2xl text-white font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer"
+                style={{ background: 'linear-gradient(135deg, #2AABEE, #229ED9)' }}
+              >
+                {isAuthRetrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                Retry
+              </button>
+            </div>
+          ) : (
+            <Loader2 className="w-5 h-5 animate-spin text-[#057D9F]/60" />
+          )}
+          <p className={`text-[12px] mt-4 ${textMuted}`}>Opened via Telegram Bot</p>
+        </motion.div>
       ) : (
-        /* ── Not authorized — show Telegram Login ── */
+        /* ── Web: show Telegram Login Widget ── */
         <motion.div custom={0} variants={cardVariants} initial="hidden" animate="visible"
           className="flex flex-col items-center pt-10 px-4">
           <motion.div
@@ -356,7 +426,6 @@ export default function ProfileView({ user }: ProfileViewProps) {
                   const data = await res.json();
                   if (data.botId) {
                     const origin = encodeURIComponent(window.location.origin);
-                    // Pass ref code through OAuth flow if present
                     const currentParams = new URLSearchParams(window.location.search);
                     const refCode = currentParams.get('ref');
                     let returnTo = '/api/auth/telegram-widget';
