@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useContext, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Info, TrendingUp, X, Ghost } from 'lucide-react';
+import { Search, Info, TrendingUp, X, Ghost, Lock } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Tooltip,
@@ -24,22 +24,22 @@ import PhantomsView from '@/components/phantom/PhantomsView';
 import AboutScreen from '@/components/phantom/AboutScreen';
 import PhantomVisionView from '@/components/phantom/PhantomVisionView';
 import { UserContext } from '@/lib/user-context';
-import { useTelegramSDK } from '@/lib/telegram-sdk';
 
-interface TelegramUser {
+export interface AppUser {
   id: number;
+  email?: string;
   first_name: string;
   last_name?: string;
   username?: string;
   photo_url?: string;
-  language_code?: string;
   isAuthorized: boolean;
   referrerCode?: string;
   planType?: string;
   generationsLeft?: number;
+  totalPurchased?: number;
+  totalUsed?: number;
 }
 
-// Wrapper with Suspense boundary for useSearchParams
 function HomePage() {
   const searchParams = useSearchParams();
   return <HomeContent searchParams={searchParams} />;
@@ -47,8 +47,7 @@ function HomePage() {
 
 function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSearchParams> }) {
   const { user: contextUser, setUser: setContextUser } = useContext(UserContext);
-  const tgSDK = useTelegramSDK();
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [events, setEvents] = useState<PolymarketEvent[]>([]);
@@ -56,83 +55,40 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
   const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
 
-  // Sync context user (from session cookie) into local state
+  // Sync context user into local state
   useEffect(() => {
-    if (contextUser && !user?.isAuthorized) {
-      setUser(contextUser as TelegramUser);
-    }
-  }, [contextUser, user?.isAuthorized]);
+    if (contextUser) setUser(contextUser as AppUser);
+  }, [contextUser]);
 
-  // Auto-authorize via Telegram WebApp SDK (Mini App mode)
-  useEffect(() => {
-    if (user?.isAuthorized) return;
-    if (!tgSDK.isInTelegram || !tgSDK.user) return;
-
-    setUser({
-      id: tgSDK.user.id,
-      first_name: tgSDK.user.first_name,
-      last_name: tgSDK.user.last_name,
-      username: tgSDK.user.username,
-      photo_url: tgSDK.user.photo_url,
-      isAuthorized: true,
-      language_code: tgSDK.user.language_code,
-    });
-    setContextUser({
-      id: tgSDK.user.id,
-      first_name: tgSDK.user.first_name,
-      last_name: tgSDK.user.last_name,
-      username: tgSDK.user.username,
-      photo_url: tgSDK.user.photo_url,
-      isAuthorized: true,
-      language_code: tgSDK.user.language_code,
-    });
-  }, [tgSDK.user, tgSDK.isInTelegram, user?.isAuthorized, setContextUser]);
-
-  // Store referral code from URL for later use during signup
+  // Store referral code
   useEffect(() => {
     const ref = searchParams.get('ref');
-    if (ref) {
-      sessionStorage.setItem('phantom_ref', ref);
-    }
+    if (ref) sessionStorage.setItem('phantom_ref', ref);
   }, [searchParams]);
 
-  const updateUser = useCallback((u: TelegramUser | null) => {
+  const updateUser = useCallback((u: AppUser | null) => {
     setUser(u);
     setContextUser(u);
   }, [setContextUser]);
 
-  // Handle Telegram Login Widget callback (URL params from redirect, web-only)
-  useEffect(() => {
-    if (tgSDK.isInTelegram) return; // Skip in Mini App — SDK handles auth
-    const authStatus = searchParams.get('auth');
-    if (authStatus === 'success') {
-      const tid = searchParams.get('tid');
-      const fn = searchParams.get('fn');
-      const ln = searchParams.get('ln');
-      const un = searchParams.get('un');
-      const pp = searchParams.get('pp');
-      const rc = searchParams.get('rc');
-      const gl = searchParams.get('gl');
-      const pt = searchParams.get('pt');
+  const hasGens = (user?.generationsLeft ?? 0) > 0;
 
-      if (tid) {
-        const newUser: TelegramUser = {
-          id: parseInt(tid, 10),
-          first_name: decodeURIComponent(fn || 'User'),
-          last_name: ln ? decodeURIComponent(ln) : undefined,
-          username: un ? decodeURIComponent(un) : undefined,
-          photo_url: pp ? decodeURIComponent(pp) : undefined,
-          isAuthorized: true,
-          referrerCode: rc || undefined,
-          planType: pt || undefined,
-          generationsLeft: gl ? parseInt(gl, 10) : undefined,
-        };
-        updateUser(newUser);
-        window.history.replaceState({}, '', '/');
-      }
+  const handlePhantomVision = useCallback(() => {
+    if (!user?.isAuthorized) {
+      setActiveTab('profile');
+      return;
     }
-  }, [searchParams, updateUser, tgSDK.isInTelegram]);
+    if (!hasGens) {
+      setShowPaywall(true);
+      return;
+    }
+    if (selectedEvent) {
+      setVisionEvent(selectedEvent);
+      setSelectedEvent(null);
+    }
+  }, [selectedEvent, user, hasGens]);
 
   const fetchEventsRef = useRef<() => Promise<void>>();
 
@@ -192,7 +148,6 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
                   </button>
                 )}
               </div>
-              {/* About button */}
               <button
                 onClick={() => setIsAboutOpen(true)}
                 className="shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center bg-white/[0.06] border border-white/[0.08] text-white/30 hover:text-phantom-primary hover:border-phantom-primary/30 transition-all duration-200 active:scale-90 cursor-pointer"
@@ -234,10 +189,7 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
                       <div className="px-5 pt-4">
                         {featuredEvents.length > 0 && (
                           <div className="section-fade-in" style={{ animationDelay: '0.05s' }}>
-                            <EventCarousel
-                              events={featuredEvents}
-                              onEventClick={setSelectedEvent}
-                            />
+                            <EventCarousel events={featuredEvents} onEventClick={setSelectedEvent} />
                           </div>
                         )}
 
@@ -281,37 +233,22 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
                 )}
 
                 {activeTab === 'traders' && (
-                  <motion.div
-                    key="traders"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  >
+                  <motion.div key="traders" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
                     <TradersList />
                   </motion.div>
                 )}
 
                 {activeTab === 'phantoms' && (
-                  <motion.div
-                    key="phantoms"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  >
+                  <motion.div key="phantoms" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
                     <PhantomsView user={user} />
                   </motion.div>
                 )}
 
                 {activeTab === 'profile' && (
-                  <motion.div
-                    key="profile"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  >
+                  <motion.div key="profile" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
                     <ProfileView user={user} />
                   </motion.div>
                 )}
@@ -322,10 +259,7 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
           {/* Footer */}
           <footer className="shrink-0 px-5 py-2.5 border-t backdrop-blur-xl border-white/[0.04] bg-phantom-dark/70">
             <div className="flex items-center justify-between">
-              <button
-                onClick={() => setIsAboutOpen(true)}
-                className="flex items-center gap-1.5 cursor-pointer"
-              >
+              <button onClick={() => setIsAboutOpen(true)} className="flex items-center gap-1.5 cursor-pointer">
                 <GhostIcon className="text-phantom-primary/30" size={12} />
                 <span className="text-[10px] font-medium text-phantom-text-secondary/30 hover:text-phantom-text-secondary/50 transition-colors">Phantom</span>
               </button>
@@ -334,7 +268,6 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
           </footer>
         </div>
 
-        {/* Bottom Navigation */}
         <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* Event Modal */}
@@ -342,12 +275,7 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
           event={selectedEvent}
           isOpen={!!selectedEvent}
           onClose={() => setSelectedEvent(null)}
-          onPhantomVision={() => {
-            if (selectedEvent) {
-              setVisionEvent(selectedEvent);
-              setSelectedEvent(null);
-            }
-          }}
+          onPhantomVision={handlePhantomVision}
         />
 
         {/* Phantom Vision */}
@@ -356,6 +284,49 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
           event={visionEvent}
           onClose={() => setVisionEvent(null)}
         />
+
+        {/* Paywall Modal */}
+        <AnimatePresence>
+          {showPaywall && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+            >
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPaywall(false)} />
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="relative glass-card rounded-3xl p-6 max-w-[320px] w-full text-center"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-[#057D9F]/15 border border-[#057D9F]/20 flex items-center justify-center mx-auto mb-4">
+                  <Lock className="w-6 h-6 text-[#057D9F]" />
+                </div>
+                <h3 className="text-[17px] font-bold text-white mb-2">Phantom Vision Locked</h3>
+                <p className="text-[14px] text-white/50 mb-5 leading-relaxed">
+                  Purchase generations in your Profile to unlock AI-powered market analysis
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowPaywall(false); setActiveTab('profile'); }}
+                    className="flex-1 py-3 rounded-2xl text-white font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer"
+                    style={{ background: 'linear-gradient(135deg, #057D9F, #03436A)' }}
+                  >
+                    Go to Profile
+                  </button>
+                  <button
+                    onClick={() => setShowPaywall(false)}
+                    className="px-5 py-3 rounded-2xl text-white/50 font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer bg-white/[0.06] border border-white/[0.08]"
+                  >
+                    Close
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* About Screen */}
         <AboutScreen isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />

@@ -10,6 +10,7 @@ import GhostIcon from '@/components/phantom/GhostIcon';
 
 interface TelegramUser {
   id: number;
+  email?: string;
   first_name: string;
   isAuthorized: boolean;
   referrerCode?: string;

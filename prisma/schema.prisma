@@ -9,6 +9,7 @@ datasource db {
 
 model TelegramUser {
   id               Int               @id
+  email            String?           @unique
   firstName        String
   lastName         String?
   username         String?
