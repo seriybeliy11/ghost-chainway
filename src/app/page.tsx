@@ -22,7 +22,6 @@ import TradersList from '@/components/phantom/TradersList';
 import ProfileView from '@/components/phantom/ProfileView';
 import PhantomsView from '@/components/phantom/PhantomsView';
 import AboutScreen from '@/components/phantom/AboutScreen';
-import PhantomVisionView from '@/components/phantom/PhantomVisionView';
 import { UserContext } from '@/lib/user-context';
 
 export interface AppUser {
@@ -54,7 +53,6 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [visionEvent, setVisionEvent] = useState<PolymarketEvent | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
 
   // Sync context user into local state
@@ -85,8 +83,13 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
       return;
     }
     if (selectedEvent) {
-      setVisionEvent(selectedEvent);
-      setSelectedEvent(null);
+      const eventUrl = `https://gamma.polymarket.com/events/${selectedEvent.slug}`;
+      const params = new URLSearchParams({
+        url: eventUrl,
+        query: selectedEvent.question,
+        slug: selectedEvent.slug,
+      });
+      window.location.href = `/phantomvis?${params.toString()}`;
     }
   }, [selectedEvent, user, hasGens]);
 
@@ -276,13 +279,6 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
           isOpen={!!selectedEvent}
           onClose={() => setSelectedEvent(null)}
           onPhantomVision={handlePhantomVision}
-        />
-
-        {/* Phantom Vision */}
-        <PhantomVisionView
-          isOpen={!!visionEvent}
-          event={visionEvent}
-          onClose={() => setVisionEvent(null)}
         />
 
         {/* Paywall Modal */}
