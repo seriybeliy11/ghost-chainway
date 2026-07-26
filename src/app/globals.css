@@ -514,10 +514,132 @@ body {
 }
 .dash-draw { animation: dash-draw 3s ease-out forwards; }
 
+/* ── Onboarding scene animations (CSS-only = GPU-accelerated) ── */
+
+/* Window flicker (opacity only — compositor friendly) */
+@keyframes ob-win-flicker {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+.ob-win { animation: ob-win-flicker 3s ease-in-out infinite; }
+
+/* Eye glow pulse */
+@keyframes ob-eye-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.ob-eye { animation: ob-eye-pulse 1.5s ease-in-out infinite; }
+
+/* Money drift upward (transform + opacity — GPU) */
+@keyframes ob-money-float {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(-70px) rotate(8deg); opacity: 0; }
+}
+.ob-money { animation: ob-money-float 4s ease-in-out infinite; will-change: transform, opacity; }
+
+/* Subtle walking bob */
+@keyframes ob-bob {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+.ob-bob { animation: ob-bob 1.6s ease-in-out infinite; will-change: transform; }
+
+/* Kidnapper sway */
+@keyframes ob-sway {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-3px); }
+}
+.ob-sway { animation: ob-sway 1.4s ease-in-out infinite; will-change: transform; }
+
+/* Exclamation pop */
+@keyframes ob-pop {
+  0%, 100% { opacity: 0; transform: translateY(0); }
+  40%, 60% { opacity: 1; transform: translateY(-4px); }
+}
+.ob-pop { animation: ob-pop 1.2s ease-in-out infinite; will-change: transform, opacity; }
+
+/* Dramatic flash overlay */
+@keyframes ob-flash {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.6; }
+}
+.ob-flash { animation: ob-flash 3s ease-in-out infinite; }
+
+/* Streetlight pulse */
+@keyframes ob-light {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+.ob-light { animation: ob-light 2s ease-in-out infinite; }
+
+/* Reflection ripple */
+@keyframes ob-reflect {
+  0%, 100% { opacity: 0.08; }
+  50% { opacity: 0.18; }
+}
+.ob-reflect { animation: ob-reflect 3s ease-in-out infinite; }
+
+/* Target crosshair pulse */
+@keyframes ob-target {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.ob-target { animation: ob-target 2s ease-in-out infinite; }
+
+/* Target ping expand */
+@keyframes ob-ping {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.ob-ping { animation: ob-ping 2s ease-out infinite; transform-origin: center; transform-box: fill-box; will-change: transform, opacity; }
+
+/* Orb breathing */
+@keyframes ob-orb {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.ob-orb { animation: ob-orb 3s ease-in-out infinite; will-change: transform; }
+
+/* Aura pulse */
+@keyframes ob-aura {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+.ob-aura { animation: ob-aura 3s ease-in-out infinite; will-change: transform, opacity; }
+
+/* Ghost float */
+@keyframes ob-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.ob-float { animation: ob-float 3.5s ease-in-out infinite; will-change: transform; }
+
+/* Hunt ring expand */
+@keyframes ob-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.ob-ring { animation: ob-ring 2.5s ease-out infinite; transform-origin: center; will-change: transform, opacity; }
+
+/* Entrance (one-shot, not infinite) */
+@keyframes ob-enter-up {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ob-enter { animation: ob-enter-up 0.5s ease-out both; }
+.ob-enter-1 { animation-delay: 0.15s; }
+.ob-enter-2 { animation-delay: 0.3s; }
+.ob-enter-3 { animation-delay: 0.45s; }
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .neon-flicker, .neon-buzz, .radar-sweep, .glitch-x,
-  .hunt-ping, .drift-up, .dash-draw {
+  .hunt-ping, .drift-up, .dash-draw,
+  .ob-win, .ob-eye, .ob-money, .ob-bob, .ob-sway, .ob-pop,
+  .ob-flash, .ob-light, .ob-reflect, .ob-target, .ob-ping,
+  .ob-orb, .ob-aura, .ob-float, .ob-ring, .ob-enter {
     animation: none;
   }
 }
