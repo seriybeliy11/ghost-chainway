@@ -20,6 +20,7 @@ import BottomNavigation, { type TabId } from '@/components/phantom/BottomNavigat
 import ProfileView from '@/components/phantom/ProfileView';
 import PhantomsView from '@/components/phantom/PhantomsView';
 import AboutScreen from '@/components/phantom/AboutScreen';
+import Onboarding from '@/components/phantom/Onboarding';
 import { UserContext } from '@/lib/user-context';
 
 export interface AppUser {
@@ -165,6 +166,32 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
   const [showPaywall, setShowPaywall] = useState(false);
   const [showAskModal, setShowAskModal] = useState(false);
   const [askModalKey, setAskModalKey] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding on first visit (deferred to avoid sync setState in effect)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!localStorage.getItem('phantom_onboarding_seen')) {
+          if (!cancelled) setShowOnboarding(true);
+        }
+      } catch {
+        // localStorage unavailable
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleOnboardingComplete = useCallback(() => {
+    try { localStorage.setItem('phantom_onboarding_seen', '1'); } catch {}
+    setShowOnboarding(false);
+  }, []);
+
+  const replayOnboarding = useCallback(() => {
+    setIsAboutOpen(false);
+    setShowOnboarding(true);
+  }, []);
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -346,8 +373,13 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
         </AnimatePresence>
 
         {/* ── About screen ── */}
-        <AboutScreen isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+        <AboutScreen isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} onReplayStory={replayOnboarding} />
       </main>
+
+      {/* ── Onboarding (first-visit story) ── */}
+      <AnimatePresence>
+        {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+      </AnimatePresence>
     </TooltipProvider>
   );
 }

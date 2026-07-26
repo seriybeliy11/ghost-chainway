@@ -1,11 +1,12 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Play } from 'lucide-react';
 
 interface AboutScreenProps {
   isOpen: boolean;
   onClose: () => void;
+  onReplayStory?: () => void;
 }
 
 function FloatingGhost() {
@@ -93,7 +94,7 @@ function FloatingGhost() {
   );
 }
 
-export default function AboutScreen({ isOpen, onClose }: AboutScreenProps) {
+export default function AboutScreen({ isOpen, onClose, onReplayStory }: AboutScreenProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -201,6 +202,20 @@ export default function AboutScreen({ isOpen, onClose }: AboutScreenProps) {
             >
               Hunting alpha in prediction markets
             </motion.p>
+
+            {onReplayStory && (
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1.4 }}
+                onClick={onReplayStory}
+                className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-[#00FFCD] bg-[#00FFCD]/8 border border-[#00FFCD]/20 hover:bg-[#00FFCD]/15 hover:border-[#00FFCD]/35 transition-all active:scale-95 cursor-pointer"
+                style={{ filter: 'drop-shadow(0 0 8px rgba(0,255,205,0.2))' }}
+              >
+                <Play className="w-3.5 h-3.5" />
+                Watch the Story
+              </motion.button>
+            )}
           </motion.div>
         </motion.div>
       )}

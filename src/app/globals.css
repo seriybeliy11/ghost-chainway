@@ -450,6 +450,78 @@ body {
   }
 }
 
+/* ── Neon Onboarding animations ── */
+
+/* Neon text flicker */
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 12px currentColor); }
+  45% { opacity: 0.85; }
+  50% { opacity: 0.5; filter: drop-shadow(0 0 3px currentColor); }
+  55% { opacity: 0.85; }
+}
+.neon-flicker { animation: neon-flicker 4s ease-in-out infinite; }
+
+/* Neon sign buzz (faster, for accent text) */
+@keyframes neon-buzz {
+  0%, 100% { opacity: 1; }
+  48% { opacity: 1; }
+  49% { opacity: 0.3; }
+  50% { opacity: 1; }
+  51% { opacity: 0.4; }
+  52% { opacity: 1; }
+}
+.neon-buzz { animation: neon-buzz 6s linear infinite; }
+
+/* Radar scan sweep */
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.radar-sweep { animation: radar-sweep 4s linear infinite; transform-origin: center; }
+
+/* Glitch shift */
+@keyframes glitch-x {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  21% { transform: translateX(2px); }
+  22% { transform: translateX(0); }
+  70% { transform: translateX(1px); }
+  71% { transform: translateX(-1px); }
+  72% { transform: translateX(0); }
+}
+.glitch-x { animation: glitch-x 3s steps(1) infinite; }
+
+/* Pulse ring expand (for hunt targets) */
+@keyframes hunt-ping {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2); opacity: 0; }
+}
+.hunt-ping { animation: hunt-ping 2s ease-out infinite; transform-origin: center; }
+
+/* Slow drift upward (money / particles) */
+@keyframes drift-up {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(-60px) rotate(8deg); opacity: 0; }
+}
+.drift-up { animation: drift-up 4s ease-in-out infinite; }
+
+/* Dash draw for chart line */
+@keyframes dash-draw {
+  from { stroke-dashoffset: 200; }
+  to   { stroke-dashoffset: 0; }
+}
+.dash-draw { animation: dash-draw 3s ease-out forwards; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .neon-flicker, .neon-buzz, .radar-sweep, .glitch-x,
+  .hunt-ping, .drift-up, .dash-draw {
+    animation: none;
+  }
+}
+
 /* ── Custom scrollbar for phantom theme ── */
 .custom-scrollbar::-webkit-scrollbar {
   width: 3px;
