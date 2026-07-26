@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     // Create purchase record
     await db.purchase.create({
       data: {
-        telegramUserId: telegramId,
+        telegramUserId: BigInt(telegramId),
         amount: planConfig.amount,
         currency: 'USDT',
         orderId,

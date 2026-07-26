@@ -10,8 +10,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'telegramId required' }, { status: 400 });
     }
 
+    const tgId = BigInt(telegramId);
+
     const sub = await db.subscription.findFirst({
-      where: { telegramUserId: telegramId, isActive: true },
+      where: { telegramUserId: tgId, isActive: true },
     });
 
     if (!sub || sub.generationsLeft <= 0) {
@@ -21,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Create generation record
     await db.generation.create({
       data: {
-        telegramUserId: telegramId,
+        telegramUserId: tgId,
         eventSlug: eventSlug || '',
         eventQuestion: eventQuestion || null,
         status: 'completed',

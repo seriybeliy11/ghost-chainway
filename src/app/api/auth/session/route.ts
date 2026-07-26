@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: null });
     }
 
-    let payload: { tid: number; ts: number };
+    let payload: { tid: string; ts: number };
     try {
       const decoded = Buffer.from(sessionCookie.value, 'base64url').toString('utf-8');
       payload = JSON.parse(decoded);
@@ -22,8 +22,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: null });
     }
 
+    const userId = BigInt(payload.tid);
     const user = await db.telegramUser.findUnique({
-      where: { id: payload.tid },
+      where: { id: userId },
       select: {
         id: true,
         email: true,
@@ -40,13 +41,13 @@ export async function GET(request: NextRequest) {
     }
 
     const subscription = await db.subscription.findFirst({
-      where: { telegramUserId: user.id, isActive: true },
+      where: { telegramUserId: userId, isActive: true },
       select: { planType: true, generationsLeft: true, totalPurchased: true, totalUsed: true },
     });
 
     return NextResponse.json({
       user: {
-        id: user.id,
+        id: Number(user.id),
         email: user.email || undefined,
         first_name: user.email ? user.email.split('@')[0] : user.firstName,
         last_name: user.lastName || undefined,

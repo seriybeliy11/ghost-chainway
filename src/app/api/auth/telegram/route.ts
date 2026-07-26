@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Auth data expired' }, { status: 401 });
     }
 
-    const telegramId = parseInt(params['id'], 10);
+    const telegramId = BigInt(params['id']);
     const firstName = params['first_name'] || 'Unknown';
     const lastName = params['last_name'] || null;
     const username = params['username'] || null;
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     const languageCode = params['language_code'] || null;
 
     // Extract referral from start_param (Mini App deep link: ?startapp=REF_CODE)
-    let referredById: number | null = null;
+    let referredById: bigint | null = null;
     const startParam = params['start_param'];
     if (startParam) {
       const referrer = await db.telegramUser.findUnique({
@@ -125,12 +125,12 @@ export async function POST(request: NextRequest) {
 
     // Create session token and set cookie
     const sessionToken = Buffer.from(
-      JSON.stringify({ tid: user.id, ts: Date.now() })
+      JSON.stringify({ tid: user.id.toString(), ts: Date.now() })
     ).toString('base64url');
 
     const response = NextResponse.json({
       user: {
-        id: user.id,
+        id: Number(user.id),
         firstName: user.firstName,
         lastName: user.lastName,
         username: user.username,

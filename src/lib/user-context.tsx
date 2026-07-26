@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
 export interface AppUser {
   id: number;
@@ -31,7 +31,6 @@ const UserContext = createContext<UserContextValue>({
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
-  const initialized = useRef<boolean | null>(null);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -48,10 +47,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  if (initialized.current == null) {
-    initialized.current = true;
-    refreshUser();
-  }
+  // Load session once on mount (async — setState fires after resolve, not synchronously)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/session');
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json();
+          if (cancelled) return;
+          if (data.user) setUser(data.user);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, setUser, refreshUser }}>

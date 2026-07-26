@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Users, Ghost, UserCircle } from 'lucide-react';
+import { BarChart3, Ghost, UserCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export type TabId = 'overview' | 'traders' | 'phantoms' | 'profile';
+export type TabId = 'overview' | 'phantoms' | 'profile';
 
 interface BottomNavigationProps {
   activeTab: TabId;
@@ -16,8 +16,7 @@ interface BottomNavigationProps {
 }
 
 const tabs: { id: TabId; icon: typeof Ghost; label: string; tooltip: string }[] = [
-  { id: 'overview', icon: BarChart3, label: 'Overview', tooltip: 'Hot prediction markets' },
-  { id: 'traders', icon: Users, label: 'Traders', tooltip: 'Top traders list' },
+  { id: 'overview', icon: BarChart3, label: 'Oracle', tooltip: 'Ask the Oracle' },
   { id: 'phantoms', icon: Ghost, label: 'Phantoms', tooltip: 'Referral program — earn 10%' },
   { id: 'profile', icon: UserCircle, label: 'Profile', tooltip: 'Subscription and balance' },
 ];
@@ -41,7 +40,7 @@ export default function BottomNavigation({ activeTab, onTabChange }: BottomNavig
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => onTabChange(tab.id)}
-                    className={`flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-200 relative active:scale-90 ${
+                    className={`flex flex-col items-center justify-center gap-0.5 w-20 h-full transition-all duration-200 relative active:scale-90 ${
                       isActive
                         ? 'text-phantom-primary'
                         : 'text-white/30 hover:text-white/50'

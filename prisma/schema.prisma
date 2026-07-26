@@ -3,12 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model TelegramUser {
-  id               Int               @id
+  id               BigInt            @id @default(autoincrement())
   email            String?           @unique
   firstName        String
   lastName         String?
@@ -18,7 +19,7 @@ model TelegramUser {
   isBot            Boolean           @default(false)
   authDate         DateTime          @default(now())
   referrerCode     String?           @unique
-  referredById     Int?
+  referredById     BigInt?
   balance          Float             @default(0)
   totalEarned      Float             @default(0)
   cashoutAddress   String?
@@ -33,14 +34,13 @@ model TelegramUser {
   earnedFrom       ReferralEarning[] @relation("ReferrerEarnings")
   spentOn          ReferralEarning[] @relation("ReferredEarnings")
 
-  @@unique([id])
   @@index([referrerCode])
   @@index([referredById])
 }
 
 model Subscription {
   id              String       @id @default(cuid())
-  telegramUserId  Int
+  telegramUserId  BigInt
   planType        String       @default("free")
   generationsLeft Int          @default(5)
   totalPurchased  Int          @default(0)
@@ -57,7 +57,7 @@ model Subscription {
 
 model Purchase {
   id               String   @id @default(cuid())
-  telegramUserId   Int
+  telegramUserId   BigInt
   amount           String
   currency         String   @default("USDT")
   orderId          String
@@ -77,7 +77,7 @@ model Purchase {
 
 model Generation {
   id              String   @id @default(cuid())
-  telegramUserId  Int
+  telegramUserId  BigInt
   eventSlug       String
   eventQuestion   String?
   status          String   @default("pending")
@@ -94,8 +94,8 @@ model Generation {
 
 model ReferralEarning {
   id              String   @id @default(cuid())
-  referrerId      Int
-  referredId      Int
+  referrerId      BigInt
+  referredId      BigInt
   purchaseId      String
   amount          String
   percent         Int      @default(10)

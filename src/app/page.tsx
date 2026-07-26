@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useContext, Suspense } from 'react';
+import { useState, useEffect, useCallback, useContext, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Info, TrendingUp, X, Ghost, Lock } from 'lucide-react';
+import {
+  X, Lock,
+  Send, Sparkles, Zap,
+} from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Tooltip,
@@ -11,14 +14,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+import MagicOrb from '@/components/phantom/MagicOrb';
 import GhostIcon from '@/components/phantom/GhostIcon';
 import BottomNavigation, { type TabId } from '@/components/phantom/BottomNavigation';
-import EventCarousel from '@/components/phantom/EventCarousel';
-import EventCard from '@/components/phantom/EventCard';
-import type { PolymarketEvent } from '@/components/phantom/EventCard';
-import SkeletonCard from '@/components/phantom/SkeletonCard';
-import EventModal from '@/components/phantom/EventModal';
-import TradersList from '@/components/phantom/TradersList';
 import ProfileView from '@/components/phantom/ProfileView';
 import PhantomsView from '@/components/phantom/PhantomsView';
 import AboutScreen from '@/components/phantom/AboutScreen';
@@ -39,219 +37,232 @@ export interface AppUser {
   totalUsed?: number;
 }
 
+/* ── Ask Oracle Modal ────────────────────────────────────── */
+function AskOracleModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isAuthorized,
+  hasGens,
+  onGoProfile,
+  onShowPaywall,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (query: string) => void;
+  isAuthorized: boolean;
+  hasGens: boolean;
+  onGoProfile: () => void;
+  onShowPaywall: () => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = useCallback(() => {
+    if (!query.trim() || submitting) return;
+    if (!isAuthorized) { onClose(); onGoProfile(); return; }
+    if (!hasGens) { onClose(); onShowPaywall(); return; }
+    setSubmitting(true);
+    onSubmit(query.trim());
+  }, [query, submitting, isAuthorized, hasGens, onClose, onSubmit, onGoProfile, onShowPaywall]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+        >
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
+
+          <motion.div
+            initial={{ y: 100, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 100, opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="relative w-full max-w-[440px] mx-4 mb-4 sm:mb-0 rounded-3xl overflow-hidden p-5"
+            style={{
+              background: 'linear-gradient(145deg, rgba(20,20,55,0.97), rgba(8,8,24,0.99))',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 0 80px rgba(64,108,255,0.2), 0 24px 80px rgba(0,0,0,0.6)',
+            }}
+          >
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none"
+              style={{ width: '70%', height: 100, background: 'radial-gradient(ellipse at top, rgba(64,108,255,0.2), transparent)', filter: 'blur(25px)' }}
+            />
+
+            <div className="relative z-10 flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-phantom-primary/15 border border-phantom-primary/20">
+                <Sparkles className="w-5 h-5 text-phantom-primary-light" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-[16px] font-bold text-white">Ask the Oracle</h3>
+                <p className="text-[11px] text-white/30">Ask about any prediction market</p>
+              </div>
+              <button onClick={onClose}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.06] border border-white/[0.08] text-white/40 hover:text-white/70 cursor-pointer">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="relative z-10 rounded-2xl bg-white/[0.05] border border-white/[0.08] focus-within:border-phantom-primary/30 transition-colors">
+              <textarea
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+                placeholder="Ask about any market, event, or prediction..."
+                rows={2}
+                className="w-full bg-transparent px-4 py-3 text-[14px] text-white placeholder:text-white/20 outline-none resize-none"
+              />
+              <button
+                onClick={handleSubmit}
+                disabled={!query.trim() || submitting}
+                className="absolute right-3 bottom-3 w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer disabled:opacity-20"
+                style={{
+                  background: query.trim() ? 'linear-gradient(135deg, #406CFF, #6A00FF)' : 'rgba(255,255,255,0.06)',
+                  boxShadow: query.trim() ? '0 4px 16px rgba(64,108,255,0.4)' : 'none',
+                }}
+              >
+                {submitting
+                  ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </motion.div>
+                  : <Send className="w-3.5 h-3.5 text-white" />
+                }
+              </button>
+            </div>
+
+            {!isAuthorized && (
+              <p className="relative z-10 mt-3 text-[12px] text-amber-400/50 flex items-center gap-1.5">
+                <Lock className="w-3 h-3" /> Sign in to use the Oracle
+              </p>
+            )}
+            {isAuthorized && !hasGens && (
+              <p className="relative z-10 mt-3 text-[12px] text-amber-400/50 flex items-center gap-1.5">
+                <Zap className="w-3 h-3" /> Purchase generations to unlock
+              </p>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ── Home Page ──────────────────────────────────────────────── */
 function HomePage() {
   const searchParams = useSearchParams();
   return <HomeContent searchParams={searchParams} />;
 }
 
 function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSearchParams> }) {
-  const { user: contextUser, setUser: setContextUser } = useContext(UserContext);
-  const [user, setUser] = useState<AppUser | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const { user: contextUser } = useContext(UserContext);
+  const user = contextUser ? (contextUser as AppUser) : null;
   const [activeTab, setActiveTab] = useState<TabId>('overview');
-  const [events, setEvents] = useState<PolymarketEvent[]>([]);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<PolymarketEvent | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showAskModal, setShowAskModal] = useState(false);
+  const [askModalKey, setAskModalKey] = useState(0);
 
-  // Sync context user into local state
-  useEffect(() => {
-    if (contextUser) setUser(contextUser as AppUser);
-  }, [contextUser]);
-
-  // Store referral code
   useEffect(() => {
     const ref = searchParams.get('ref');
     if (ref) sessionStorage.setItem('phantom_ref', ref);
   }, [searchParams]);
 
-  const updateUser = useCallback((u: AppUser | null) => {
-    setUser(u);
-    setContextUser(u);
-  }, [setContextUser]);
-
   const hasGens = (user?.generationsLeft ?? 0) > 0;
 
-  const handlePhantomVision = useCallback(() => {
-    if (!user?.isAuthorized) {
-      setActiveTab('profile');
-      return;
-    }
-    if (!hasGens) {
-      setShowPaywall(true);
-      return;
-    }
-    if (selectedEvent) {
-      const eventUrl = `https://gamma.polymarket.com/events/${selectedEvent.slug}`;
-      const params = new URLSearchParams({
-        url: eventUrl,
-        query: selectedEvent.question,
-        slug: selectedEvent.slug,
-      });
-      window.location.href = `/phantomvis?${params.toString()}`;
-    }
-  }, [selectedEvent, user, hasGens]);
+  // Ask Oracle (custom question)
+  const handleAskSubmit = useCallback((query: string) => {
+    if (!user?.isAuthorized) { setActiveTab('profile'); setShowAskModal(false); return; }
+    if (!hasGens) { setShowPaywall(true); setShowAskModal(false); return; }
+    const params = new URLSearchParams({ query });
+    window.location.href = `/phantomvis?${params.toString()}`;
+  }, [user, hasGens]);
 
-  const fetchEventsRef = useRef<() => Promise<void>>();
-
-  const fetchEvents = useCallback(async () => {
-    setIsLoadingEvents(true);
-    try {
-      const res = await fetch('/api/polymarket');
-      const data = await res.json();
-      if (data.events?.length > 0) setEvents(data.events);
-    } catch { /* keep existing */ }
-    finally { setTimeout(() => setIsLoadingEvents(false), 300); }
+  // Orb click
+  const handleOrbClick = useCallback(() => {
+    setAskModalKey(k => k + 1);
+    setShowAskModal(true);
   }, []);
-
-  fetchEventsRef.current = fetchEvents;
-  useEffect(() => { fetchEventsRef.current?.(); }, []);
-
-  const filteredEvents = searchQuery.trim()
-    ? events.filter(e =>
-        e.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.category?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : events;
-  const featuredEvents = filteredEvents.slice(0, 4);
-  const otherEvents = filteredEvents.slice(4);
 
   return (
     <TooltipProvider delayDuration={300}>
       <main className="flex flex-col bg-phantom-dark relative min-h-screen">
-        {/* Background ambient glows */}
+        {/* ── Background ambient ── */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[120px] bg-phantom-primary/6" />
-          <div className="absolute top-1/4 -right-32 w-48 h-48 rounded-full blur-[100px] bg-phantom-secondary-a/5" />
-          <div className="absolute bottom-1/4 left-1/4 w-56 h-56 rounded-full blur-[140px] bg-phantom-secondary-b/3" />
+          <motion.div
+            animate={{ scale: [1, 1.08, 1], opacity: [0.04, 0.07, 0.04] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-phantom-primary/[0.06] blur-[120px]"
+          />
+          <div className="absolute top-1/3 -right-48 w-[400px] h-[400px] rounded-full blur-[100px] bg-phantom-secondary-a/[0.03]" />
+          <div className="absolute bottom-1/4 -left-48 w-[350px] h-[350px] rounded-full blur-[100px] bg-phantom-secondary-b/[0.02]" />
         </div>
 
         <div className="relative z-10 flex flex-col flex-1 overflow-hidden">
-          {/* Search bar */}
-          <div className="shrink-0 px-4 pt-4 pb-3 backdrop-blur-2xl border-b border-white/[0.06] bg-[#0A1628]/80">
-            <div className="flex items-center gap-2.5">
-              <div className="relative flex-1 flex items-center rounded-2xl bg-white/[0.06] border border-white/[0.08] focus-within:border-phantom-primary/40">
-                <Search className={`w-4 h-4 ml-3.5 shrink-0 ${
-                  searchQuery ? 'text-phantom-primary' : 'text-white/25'
-                }`} />
-                <input
-                  type="text"
-                  placeholder="Search markets..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent py-2.5 pl-2.5 pr-3 text-[14px] placeholder:font-normal outline-none text-white placeholder:text-white/25"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="mr-2 shrink-0 p-0.5 rounded-full hover:bg-white/10 text-white/30 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => setIsAboutOpen(true)}
-                className="shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center bg-white/[0.06] border border-white/[0.08] text-white/30 hover:text-phantom-primary hover:border-phantom-primary/30 transition-all duration-200 active:scale-90 cursor-pointer"
-              >
-                <Ghost className="w-4.5 h-4.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Tab content */}
+          {/* ── Scrollable area ── */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
             <div className="pb-24">
               <AnimatePresence mode="wait">
                 {activeTab === 'overview' && (
                   <motion.div
                     key="overview"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {isLoadingEvents ? (
-                      <div className="px-5 pt-4 space-y-5">
-                        <div className="space-y-3">
-                          <div className="h-5 w-36 rounded-lg skeleton-shimmer bg-white/5" />
-                          <div className="flex gap-3 overflow-hidden">
-                            <div className="flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer bg-white/[0.03] border border-white/[0.05]" />
-                            <div className="flex-shrink-0 w-[85%] h-[220px] rounded-3xl skeleton-shimmer bg-white/[0.03] border border-white/[0.05]" />
-                          </div>
+                    {/* ── Top bar ── */}
+                    <div className="px-4 pt-5 pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <GhostIcon className="text-phantom-secondary-b/60" size={18} />
+                          <span className="text-[14px] font-bold text-white/60 tracking-wide">Phantom</span>
                         </div>
-                        <div className="space-y-3">
-                          <div className="h-5 w-40 rounded-lg skeleton-shimmer bg-white/5" />
-                          {Array.from({ length: 3 }).map((_, i) => (
-                            <SkeletonCard key={i} index={i} />
-                          ))}
+                        <div className="flex items-center gap-1.5">
+                          {user?.isAuthorized && hasGens && (
+                            <span className="text-[10px] font-semibold px-2.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/15">
+                              {user.generationsLeft} gens
+                            </span>
+                          )}
+                          <button
+                            onClick={() => setIsAboutOpen(true)}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/[0.04] border border-white/[0.06] text-white/25 hover:text-white/50 hover:border-white/[0.1] transition-all cursor-pointer"
+                          >
+                            <GhostIcon size={14} />
+                          </button>
                         </div>
                       </div>
-                    ) : (
-                      <div className="px-5 pt-4">
-                        {featuredEvents.length > 0 && (
-                          <div className="section-fade-in" style={{ animationDelay: '0.05s' }}>
-                            <EventCarousel events={featuredEvents} onEventClick={setSelectedEvent} />
-                          </div>
-                        )}
+                    </div>
 
-                        {otherEvents.length > 0 && (
-                          <section className="mb-6 section-fade-in" style={{ animationDelay: '0.15s' }}>
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-phantom-primary-light" />
-                                <h2 className="text-[16px] font-bold text-white">More Markets</h2>
-                              </div>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 text-white/30">
-                                    <Info className="w-3.5 h-3.5" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="left" className="max-w-[220px] text-[13px] bg-[#0F1E33] text-gray-200 border-white/10">
-                                  Active markets sorted by 24h volume
-                                </TooltipContent>
-                              </Tooltip>
-                            </div>
-                            <div className="space-y-3">
-                              {otherEvents.map((event, index) => (
-                                <div key={event.id} className="card-2d-enter" style={{ animationDelay: `${index * 60}ms` }}>
-                                  <EventCard event={event} index={index} onClick={() => setSelectedEvent(event)} />
-                                </div>
-                              ))}
-                            </div>
-                          </section>
-                        )}
+                    {/* ── The Orb — strictly centered ── */}
+                    <div className="flex flex-col items-center justify-center" style={{ minHeight: 'calc(100dvh - 160px)' }}>
+                      <MagicOrb onClick={handleOrbClick} />
 
-                        {events.length > 0 && (
-                          <div className="flex flex-col items-center gap-1.5 pt-3 pb-4">
-                            <GhostIcon className="text-phantom-primary/20" size={16} />
-                            <p className="text-[13px] text-white/30">You&apos;re all caught up</p>
-                          </div>
-                        )}
+                      {/* Label */}
+                      <div className="mt-5 flex items-center gap-2">
+                        <div className="w-1 h-1 rounded-full bg-phantom-secondary-b/40" />
+                        <span className="text-[11px] font-semibold text-white/20 uppercase tracking-[0.2em]">
+                          Tap to ask
+                        </span>
+                        <div className="w-1 h-1 rounded-full bg-phantom-secondary-b/40" />
                       </div>
-                    )}
-                  </motion.div>
-                )}
-
-                {activeTab === 'traders' && (
-                  <motion.div key="traders" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
-                    <TradersList />
+                    </div>
                   </motion.div>
                 )}
 
                 {activeTab === 'phantoms' && (
-                  <motion.div key="phantoms" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+                  <motion.div key="phantoms" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}>
                     <PhantomsView user={user} />
                   </motion.div>
                 )}
 
                 {activeTab === 'profile' && (
-                  <motion.div key="profile" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+                  <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}>
                     <ProfileView user={user} />
                   </motion.div>
                 )}
@@ -259,29 +270,34 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
             </div>
           </div>
 
-          {/* Footer */}
-          <footer className="shrink-0 px-5 py-2.5 border-t backdrop-blur-xl border-white/[0.04] bg-phantom-dark/70">
+          {/* ── Sticky footer ── */}
+          <footer className="shrink-0 px-5 py-2 border-t backdrop-blur-xl border-white/[0.04] bg-phantom-dark/70">
             <div className="flex items-center justify-between">
               <button onClick={() => setIsAboutOpen(true)} className="flex items-center gap-1.5 cursor-pointer">
-                <GhostIcon className="text-phantom-primary/30" size={12} />
-                <span className="text-[10px] font-medium text-phantom-text-secondary/30 hover:text-phantom-text-secondary/50 transition-colors">Phantom</span>
+                <GhostIcon className="text-phantom-primary/25" size={12} />
+                <span className="text-[10px] font-medium text-white/15 hover:text-white/25 transition-colors">Phantom</span>
               </button>
-              <span className="text-[10px] text-phantom-text-secondary/25">Powered by Polymarket</span>
+              <span className="text-[10px] text-white/10">Polymarket</span>
             </div>
           </footer>
         </div>
 
+        {/* ── Bottom nav ── */}
         <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Event Modal */}
-        <EventModal
-          event={selectedEvent}
-          isOpen={!!selectedEvent}
-          onClose={() => setSelectedEvent(null)}
-          onPhantomVision={handlePhantomVision}
+        {/* ── Ask Oracle modal ── */}
+        <AskOracleModal
+          key={askModalKey}
+          isOpen={showAskModal}
+          onClose={() => setShowAskModal(false)}
+          onSubmit={handleAskSubmit}
+          isAuthorized={user?.isAuthorized ?? false}
+          hasGens={hasGens}
+          onGoProfile={() => setActiveTab('profile')}
+          onShowPaywall={() => setShowPaywall(true)}
         />
 
-        {/* Paywall Modal */}
+        {/* ── Paywall modal ── */}
         <AnimatePresence>
           {showPaywall && (
             <motion.div
@@ -290,31 +306,36 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-6"
             >
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPaywall(false)} />
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={() => setShowPaywall(false)} />
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="relative glass-card rounded-3xl p-6 max-w-[320px] w-full text-center"
+                className="relative rounded-3xl p-6 max-w-[320px] w-full text-center"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(20,20,55,0.97), rgba(8,8,24,0.99))',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 0 60px rgba(64,108,255,0.15), 0 24px 80px rgba(0,0,0,0.5)',
+                }}
               >
-                <div className="w-14 h-14 rounded-2xl bg-[#057D9F]/15 border border-[#057D9F]/20 flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-6 h-6 text-[#057D9F]" />
+                <div className="w-14 h-14 rounded-2xl bg-phantom-primary/15 border border-phantom-primary/20 flex items-center justify-center mx-auto mb-4">
+                  <Lock className="w-6 h-6 text-phantom-primary" />
                 </div>
-                <h3 className="text-[17px] font-bold text-white mb-2">Phantom Vision Locked</h3>
-                <p className="text-[14px] text-white/50 mb-5 leading-relaxed">
+                <h3 className="text-[17px] font-bold text-white mb-2">Oracle Locked</h3>
+                <p className="text-[14px] text-white/35 mb-5 leading-relaxed">
                   Purchase generations in your Profile to unlock AI-powered market analysis
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => { setShowPaywall(false); setActiveTab('profile'); }}
                     className="flex-1 py-3 rounded-2xl text-white font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer"
-                    style={{ background: 'linear-gradient(135deg, #057D9F, #03436A)' }}
+                    style={{ background: 'linear-gradient(135deg, #406CFF, #6A00FF)' }}
                   >
-                    Go to Profile
+                    Profile
                   </button>
                   <button
                     onClick={() => setShowPaywall(false)}
-                    className="px-5 py-3 rounded-2xl text-white/50 font-semibold text-[14px] transition-all active:scale-[0.97] cursor-pointer bg-white/[0.06] border border-white/[0.08]"
+                    className="px-5 py-3 rounded-2xl text-white/30 font-semibold text-[14px] cursor-pointer bg-white/[0.06] border border-white/[0.08]"
                   >
                     Close
                   </button>
@@ -324,7 +345,7 @@ function HomeContent({ searchParams }: { searchParams: ReturnType<typeof useSear
           )}
         </AnimatePresence>
 
-        {/* About Screen */}
+        {/* ── About screen ── */}
         <AboutScreen isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
       </main>
     </TooltipProvider>

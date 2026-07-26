@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const user = await db.telegramUser.findUnique({
-      where: { id: parseInt(telegramId, 10) },
+      where: { id: BigInt(telegramId) },
       select: {
         id: true,
         firstName: true,
@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       user: {
         ...user,
+        id: Number(user.id),
+        referredById: user.referredById ? Number(user.referredById) : null,
         planType: subscription?.planType || 'free',
         generationsLeft: subscription?.generationsLeft || 0,
         totalPurchased: subscription?.totalPurchased || 0,

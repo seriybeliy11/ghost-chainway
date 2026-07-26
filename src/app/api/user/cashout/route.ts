@@ -14,8 +14,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid address' }, { status: 400 });
     }
 
+    const tgId = BigInt(telegramId);
+
     await db.telegramUser.update({
-      where: { id: telegramId },
+      where: { id: tgId },
       data: { cashoutAddress },
     });
 

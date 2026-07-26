@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const tid = parseInt(telegramId, 10);
+    const tid = BigInt(telegramId);
 
     // Count direct referrals
     const referralCount = await db.telegramUser.count({
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     });
 
     const referralList = referrals.map(r => ({
-      id: r.id,
+      id: Number(r.id),
       firstName: r.firstName,
       username: r.username,
       photoUrl: r.photoUrl,

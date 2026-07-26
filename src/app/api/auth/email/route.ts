@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const userId = emailToId(normalizedEmail);
+    const userId = BigInt(emailToId(normalizedEmail));
 
     // Resolve referral
-    let referredById: number | null = null;
+    let referredById: bigint | null = null;
     if (ref) {
       const referrer = await db.telegramUser.findUnique({
         where: { referrerCode: ref },
@@ -81,12 +81,12 @@ export async function POST(request: NextRequest) {
 
     // Session token
     const sessionToken = Buffer.from(
-      JSON.stringify({ tid: user.id, ts: Date.now() })
+      JSON.stringify({ tid: user.id.toString(), ts: Date.now() })
     ).toString('base64url');
 
     const response = NextResponse.json({
       user: {
-        id: user.id,
+        id: Number(user.id),
         email: user.email,
         firstName: user.firstName,
         referrerCode: user.referrerCode,

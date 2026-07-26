@@ -43,8 +43,9 @@ export async function POST(request: NextRequest) {
     let subscriptionId: string | null = null;
 
     if (telegramId) {
+      const tgId = BigInt(telegramId);
       const sub = await db.subscription.findFirst({
-        where: { telegramUserId: telegramId, isActive: true },
+        where: { telegramUserId: tgId, isActive: true },
       });
 
       if (!sub || sub.generationsLeft <= 0) {
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
       // Create generation record
       const generation = await db.generation.create({
         data: {
-          telegramUserId: telegramId,
+          telegramUserId: tgId,
           eventSlug: slug || eventUrl,
           eventQuestion: eventQuestion || null,
           status: 'running',
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
 
       // Refund generation on Dify error
       if (generationId && subscriptionId && telegramId) {
-        await refundGeneration(generationId, subscriptionId, telegramId, `Dify error ${difyResponse.status}`);
+        await refundGeneration(generationId, subscriptionId, tgId, `Dify error ${difyResponse.status}`);
       }
 
       return NextResponse.json(
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
 
     // Refund generation
     if (generationId && subscriptionId && telegramId) {
-      await refundGeneration(generationId, subscriptionId, telegramId, difyError);
+      await refundGeneration(generationId, subscriptionId, tgId, difyError);
     }
 
     return NextResponse.json({ error: difyError }, { status: 502 });
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
 async function refundGeneration(
   generationId: string,
   subscriptionId: string,
-  telegramId: number,
+  telegramId: bigint,
   errorMessage: string
 ) {
   try {

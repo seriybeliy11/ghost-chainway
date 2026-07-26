@@ -60,13 +60,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/?auth_error=invalid', request.url));
     }
 
-    const telegramId = parseInt(id, 10);
+    const telegramId = BigInt(id);
 
     // Check for referral code in URL
     const refCode = searchParams.get('ref');
 
     // Upsert user
-    let referredById: number | null = null;
+    let referredById: bigint | null = null;
 
     if (refCode) {
       const referrer = await db.telegramUser.findUnique({
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
 
     // Create a session token
     const sessionToken = Buffer.from(
-      JSON.stringify({ tid: user.id, ts: Date.now() })
+      JSON.stringify({ tid: user.id.toString(), ts: Date.now() })
     ).toString('base64url');
 
     // Redirect back to main page with auth data
@@ -130,6 +130,7 @@ export async function GET(request: NextRequest) {
     redirectUrl.searchParams.set('rc', user.referrerCode || '');
     redirectUrl.searchParams.set('gl', String(subscription.generationsLeft));
     redirectUrl.searchParams.set('pt', subscription.planType);
+    redirectUrl.searchParams.set('ri', referredById ? String(referredById) : '');
 
     const response = NextResponse.redirect(redirectUrl);
     response.cookies.set('phantom_session', sessionToken, {

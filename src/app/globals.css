@@ -1,12 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-
-@font-face {
-  font-family: 'Manrope';
-  src: url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
-}
 
 @theme inline {
   --color-background: var(--background);
@@ -312,4 +308,113 @@ body {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* ── Card 2D entrance ── */
+@keyframes card2dEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-2d-enter {
+  animation: card2dEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* ── Section fade in ── */
+@keyframes sectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-fade-in {
+  animation: sectionFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* ── Orb light animations (subtle) ── */
+
+/* Slow rotation for outer dashed ring */
+@keyframes orb-ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Counter-rotation for inner ring */
+@keyframes orb-ring-spin-rev {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* Gentle breathing for ambient glow (opacity + scale) */
+@keyframes orb-glow-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+
+/* Slow rotation of the conic swirl */
+@keyframes orb-swirl-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Subtle ghost icon pulse (drop-shadow breathing) */
+@keyframes orb-ghost-pulse {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(0,255,205,0.35)); transform: scale(1); }
+  50%      { filter: drop-shadow(0 0 20px rgba(0,255,205,0.6));  transform: scale(1.04); }
+}
+
+/* Slow drift of marker dots ring */
+@keyframes orb-marker-orbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.orb-ring-spin       { animation: orb-ring-spin 40s linear infinite; }
+.orb-ring-spin-rev   { animation: orb-ring-spin-rev 60s linear infinite; }
+.orb-glow-breathe    { animation: orb-glow-breathe 8s ease-in-out infinite; }
+.orb-swirl-spin      { animation: orb-swirl-spin 30s linear infinite; }
+.orb-ghost-pulse     { animation: orb-ghost-pulse 4s ease-in-out infinite; }
+.orb-marker-orbit    { animation: orb-marker-orbit 50s linear infinite; }
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .orb-ring-spin,
+  .orb-ring-spin-rev,
+  .orb-glow-breathe,
+  .orb-swirl-spin,
+  .orb-ghost-pulse,
+  .orb-marker-orbit {
+    animation: none;
+  }
+}
+
+/* ── Custom scrollbar for phantom theme ── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(64, 108, 255, 0.2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(64, 108, 255, 0.4);
 }
