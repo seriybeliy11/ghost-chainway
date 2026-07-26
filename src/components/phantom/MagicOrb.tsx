@@ -30,6 +30,30 @@ export default function MagicOrb({ onClick }: MagicOrbProps) {
         }}
       />
 
+      {/* ── Expanding waves (sonar ripples) ── */}
+      <div className="absolute inset-0 pointer-events-none" style={{ transformOrigin: 'center' }}>
+        {[
+          { delay: '0s', color: 'rgba(0,255,205,0.6)' },
+          { delay: '1.66s', color: 'rgba(64,108,255,0.55)' },
+          { delay: '3.33s', color: 'rgba(143,64,255,0.5)' },
+        ].map((w, i) => (
+          <div
+            key={i}
+            className="absolute top-1/2 left-1/2 rounded-full orb-wave"
+            style={{
+              width: ORB_SIZE,
+              height: ORB_SIZE,
+              marginTop: -ORB_SIZE / 2,
+              marginLeft: -ORB_SIZE / 2,
+              border: `2px solid ${w.color}`,
+              boxShadow: `0 0 12px ${w.color}`,
+              animationDelay: w.delay,
+              transformOrigin: 'center',
+            }}
+          />
+        ))}
+      </div>
+
       {/* ── Teal glow (slow breathing, offset phase) ── */}
       <div
         className="absolute rounded-full pointer-events-none orb-glow-breathe"
@@ -150,6 +174,46 @@ export default function MagicOrb({ onClick }: MagicOrbProps) {
             border: '1.5px solid rgba(255,255,255,0.12)',
           }}
         >
+          {/* ── Hypnotic spiral (dual counter-rotating) ── */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="relative orb-hypno-pulse" style={{ width: '92%', height: '92%' }}>
+              {/* Spiral A — clockwise, blue/teal */}
+              <svg className="absolute inset-0 w-full h-full orb-hypno-a" viewBox="0 0 200 200" style={{ transformOrigin: 'center' }}>
+                <defs>
+                  <linearGradient id="hypno-a-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#406CFF" stopOpacity="0" />
+                    <stop offset="50%" stopColor="#406CFF" stopOpacity="0.7" />
+                    <stop offset="100%" stopColor="#00FFCD" stopOpacity="0.9" />
+                  </linearGradient>
+                </defs>
+                {/* Archimedean-style spiral: multiple concentric arcs */}
+                <g fill="none" stroke="url(#hypno-a-grad)" strokeLinecap="round">
+                  <path d="M100,100 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0" strokeWidth="1.5" opacity="0.9" transform="rotate(0 100 100)" />
+                  <path d="M100,100 m-22,0 a22,22 0 1,1 44,0" strokeWidth="1.2" opacity="0.7" strokeDasharray="60 80" />
+                  <path d="M100,100 m-38,0 a38,38 0 1,1 76,0" strokeWidth="1" opacity="0.55" strokeDasharray="50 70" />
+                  <path d="M100,100 m-54,0 a54,54 0 1,1 108,0" strokeWidth="0.8" opacity="0.4" strokeDasharray="40 60" />
+                  <path d="M100,100 m-70,0 a70,70 0 1,1 140,0" strokeWidth="0.6" opacity="0.25" strokeDasharray="30 50" />
+                </g>
+              </svg>
+              {/* Spiral B — counter-clockwise, purple, smaller */}
+              <svg className="absolute inset-0 w-full h-full orb-hypno-b" viewBox="0 0 200 200" style={{ transformOrigin: 'center' }}>
+                <defs>
+                  <linearGradient id="hypno-b-grad" x1="100%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#8F40FF" stopOpacity="0" />
+                    <stop offset="50%" stopColor="#8F40FF" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#6A00FF" stopOpacity="0.8" />
+                  </linearGradient>
+                </defs>
+                <g fill="none" stroke="url(#hypno-b-grad)" strokeLinecap="round">
+                  <path d="M100,100 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0" strokeWidth="1.3" opacity="0.8" />
+                  <path d="M100,100 m-30,0 a30,30 0 1,0 60,0" strokeWidth="1.1" opacity="0.6" strokeDasharray="45 65" />
+                  <path d="M100,100 m-46,0 a46,46 0 1,0 92,0" strokeWidth="0.9" opacity="0.45" strokeDasharray="35 55" />
+                  <path d="M100,100 m-62,0 a62,62 0 1,0 124,0" strokeWidth="0.7" opacity="0.3" strokeDasharray="25 45" />
+                </g>
+              </svg>
+            </div>
+          </div>
+
           {/* ── Specular highlight (top-left) ── */}
           <div
             className="absolute rounded-full"

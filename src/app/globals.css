@@ -389,6 +389,51 @@ body {
 .orb-ghost-pulse     { animation: orb-ghost-pulse 4s ease-in-out infinite; }
 .orb-marker-orbit    { animation: orb-marker-orbit 50s linear infinite; }
 
+/* ── Hypnotic spiral (inside sphere) ── */
+/* Dual counter-rotating spirals create an optical "pull inward" illusion */
+@keyframes orb-hypno-spin-a {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes orb-hypno-spin-b {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+/* Subtle scale breathing on the spiral so it feels alive */
+@keyframes orb-hypno-breathe {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(1.05); }
+}
+
+.orb-hypno-a    { animation: orb-hypno-spin-a 18s linear infinite; }
+.orb-hypno-b    { animation: orb-hypno-spin-b 12s linear infinite; }
+.orb-hypno-pulse { animation: orb-hypno-breathe 6s ease-in-out infinite; }
+
+/* ── Expanding waves (sonar / ripple) around the sphere ── */
+@keyframes orb-wave-expand {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+    border-width: 2px;
+  }
+  15% {
+    opacity: 0.5;
+  }
+  60% {
+    opacity: 0.18;
+    border-width: 1px;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+    border-width: 0.5px;
+  }
+}
+
+.orb-wave {
+  animation: orb-wave-expand 5s ease-out infinite;
+}
+
 /* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .orb-ring-spin,
@@ -396,7 +441,11 @@ body {
   .orb-glow-breathe,
   .orb-swirl-spin,
   .orb-ghost-pulse,
-  .orb-marker-orbit {
+  .orb-marker-orbit,
+  .orb-hypno-a,
+  .orb-hypno-b,
+  .orb-hypno-pulse,
+  .orb-wave {
     animation: none;
   }
 }
